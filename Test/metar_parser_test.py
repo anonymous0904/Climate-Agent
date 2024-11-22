@@ -44,7 +44,7 @@ class MetarParserTest(unittest.TestCase):
 
     def testNilCallsign(self):
         actual_result = metar_parser.parse_metar("202111251200 METAR LRCL 251200Z NIL=")
-        expected_result = [datetime.datetime(2021, 11, 25, 12, 00), "METAR", "NIL", None] + [None] * 34
+        expected_result = [datetime.datetime(2021, 11, 25, 12, 00), "METAR", "NIL"]
         self.assertEqual(actual_result, expected_result)
 
     def testAutoCallsign(self):
@@ -236,7 +236,8 @@ class MetarParserTest(unittest.TestCase):
 
     def testOneCloudLayerTCUNoNebulosityNoAltitude(self):
         actual_result = metar_parser.parse_metar(
-            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU M00/M02 Q1025=")
+            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU M00/M02 "
+            "Q1025=")
         expected_result = [datetime.datetime(2021, 11, 23, 19, 00), "METAR COR", None, None, 8, True, 18, 60, 180,
                            False, 1000, None, None, 25, None, None, 'U', 1800, 2000, 'M', 'P', "BCFG", "+RA",
                            "VCRA", None, None, "TCU"] + 8 * [None] + [0, -2, 1025]
@@ -244,7 +245,8 @@ class MetarParserTest(unittest.TestCase):
 
     def testTwoCloudLayers(self):
         actual_result = metar_parser.parse_metar(
-            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU FEW013 M00/M02 Q1025=")
+            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU FEW013 "
+            "M00/M02 Q1025=")
         expected_result = [datetime.datetime(2021, 11, 23, 19, 00), "METAR COR", None, None, 8, True, 18, 60, 180,
                            False, 1000, None, None, 25, None, None, 'U', 1800, 2000, 'M', 'P', "BCFG", "+RA",
                            "VCRA", None, None, "TCU", "FEW", 13, None] + 5 * [None] + [0, -2, 1025]
@@ -252,7 +254,8 @@ class MetarParserTest(unittest.TestCase):
 
     def testThreeCloudLayers(self):
         actual_result = metar_parser.parse_metar(
-            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU FEW013 OVC060/// M00/M02 Q1025=")
+            "202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/M1800VP2000U BCFG +RA VCRA //////TCU FEW013 "
+            "OVC060/// M00/M02 Q1025=")
         expected_result = [datetime.datetime(2021, 11, 23, 19, 00), "METAR COR", None, None, 8, True, 18, 60, 180,
                            False, 1000, None, None, 25, None, None, 'U', 1800, 2000, 'M', 'P', "BCFG", "+RA",
                            "VCRA", None, None, "TCU", "FEW", 13, None, "OVC", 60, "///"] + 2 * [None] + [0, -2, 1025]
