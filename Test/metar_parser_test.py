@@ -1,6 +1,6 @@
 import datetime
 import unittest
-import metar_parser
+from Parser import metar_parser
 
 
 class MetarParserTest(unittest.TestCase):

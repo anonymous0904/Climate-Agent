@@ -1,12 +1,13 @@
 import psycopg2
-import datetime
 import re
+
+from Parser.parser import string_to_datetime, parse_wind
 
 
 # returns the connection to the WeatherForecast database
 def database_connection():
     try:
-        connection = psycopg2.connect(
+        db_connection = psycopg2.connect(
             host="localhost",
             database="WeatherForecast",
             user="postgres",
@@ -14,7 +15,7 @@ def database_connection():
             port=5432
         )
         print("Connected to the database.")
-        return connection
+        return db_connection
     except psycopg2.OperationalError as e:
         print(f"Error: {e}")
         return None
@@ -25,33 +26,21 @@ def disconnect_from_database(connection):
     print("Disconnected from the database.")
 
 
-def string_to_datetime(string):
-    year = string[0:4]
-    month = string[4:6]
-    day = string[6:8]
-    hour = string[8:10]
-    minute = string[10:]
-    datetime_string = year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ":00"
-    return datetime.datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S")
-
-
 # metar is a vector with elements from the code,
 # it inserts each variable to the corresponding fields of the table
 def add_metar_into_table(metar):
-    connection = database_connection()
-    cursor = connection.cursor()
-
     insert_query = """INSERT INTO metars (observation_time, message_type, message_callsign, wind_direction, 
     wind_speed, wind_variability, gust_speed, lower_direction_variation, upper_direction_variation, cavok, 
     predominant_horizontal_visibility,directional_horizontal_visibility, directional_variation_visibility,
     runway_number,runway_visibility,visibility_indicator,tendency,minimal_runway_visibility,maximal_runway_visibility,
     minimal_indicator,maximal_indicator,present_phenomena_1,present_phenomena_2,present_phenomena_3,cloud_nebulosity_1,
     cloud_altitude_1,cloud_type_1,cloud_nebulosity_2,cloud_altitude_2,cloud_type_2,cloud_nebulosity_3,cloud_altitude_3,
-    cloud_type_3,no_cloud,vertical_visibility,air_temperature,dew_point,air_pressure) """
+    cloud_type_3,no_cloud,vertical_visibility,air_temperature,dew_point,air_pressure) 
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     query_values = tuple(metar)
     cursor.execute(insert_query, query_values)
     connection.commit()
-    disconnect_from_database(connection)
 
 
 # returns a vector of the variables from the metar(one single metar at a time)
@@ -91,63 +80,7 @@ def parse_metar(metar):
         print(e.args, ':', metar)
 
     # wind
-    if re.match("^[0-9]{5}KT$", metar_elements[0]):
-        wind_direction = metar_elements[0][0:3]
-        wind_speed = metar_elements[0][3:5]
-        final_metar_vector.append(int(wind_direction))
-        final_metar_vector.append(int(wind_speed))
-        final_metar_vector.append(False)  # no variability
-        final_metar_vector.append(None)  # gust speed (no gust)
-        metar_elements = metar_elements[1:]
-        if re.match("^[0-9]{3}V[0-9]{3}$", metar_elements[0]):  # direction variation after basic information
-            low_direction = metar_elements[0][0:3]
-            up_direction = metar_elements[0][4:]
-            metar_elements = metar_elements[1:]
-            final_metar_vector.append(int(low_direction))
-            final_metar_vector.append(int(up_direction))
-        else:  # no direction variation
-            final_metar_vector.append(None)
-            final_metar_vector.append(None)
-
-    elif re.match("^[0-9]{5}G[0-9]{2}KT$", metar_elements[0]):  # wind with gust
-        wind_direction = metar_elements[0][0:3]
-        wind_speed = metar_elements[0][3:5]
-        gust_speed = metar_elements[0][6:8]
-        final_metar_vector.append(int(wind_direction))
-        final_metar_vector.append(int(wind_speed))
-        final_metar_vector.append(False)  # no variability
-        final_metar_vector.append(int(gust_speed))
-        metar_elements = metar_elements[1:]
-        if re.match("^[0-9]{3}V[0-9]{3}$", metar_elements[0]):  # direction variation after gust information
-            low_direction = metar_elements[0][0:3]
-            up_direction = metar_elements[0][4:]
-            metar_elements = metar_elements[1:]
-            final_metar_vector.append(int(low_direction))
-            final_metar_vector.append(int(up_direction))
-        else:  # no direction variation
-            final_metar_vector.append(None)
-            final_metar_vector.append(None)
-
-    elif re.match("^VRB[0-9]{2}KT$", metar_elements[0]):
-        final_metar_vector.append(None)  # no concrete information about the direction (60-180 degrees)
-        wind_speed = metar_elements[0][3:5]
-        final_metar_vector.append(int(wind_speed))
-        final_metar_vector.append(True)  # wind variability
-        final_metar_vector.append(None)  # no gust
-        final_metar_vector.append(60)
-        final_metar_vector.append(180)  # when VRB the wind direction varies between 60 and 180
-        metar_elements = metar_elements[1:]
-
-    elif re.match("^VRB[0-9]{2}G[0-9]{2}KT$", metar_elements[0]):  # variable wind with gust
-        final_metar_vector.append(None)  # no concrete information about the direction (60-180 degrees)
-        wind_speed = metar_elements[0][3:5]
-        final_metar_vector.append(int(wind_speed))
-        final_metar_vector.append(True)  # wind variability
-        gust_speed = metar_elements[0][6:8]
-        final_metar_vector.append(int(gust_speed))
-        final_metar_vector.append(60)
-        final_metar_vector.append(180)  # when VRB the wind direction varies between 60 and 180
-        metar_elements = metar_elements[1:]
+    metar_elements, final_metar_vector = parse_wind(metar_elements, final_metar_vector)
 
     # CAVOK
     if metar_elements[0] == "CAVOK":
@@ -334,35 +267,17 @@ def parse_metar(metar):
     return final_metar_vector
 
 
+connection = database_connection()
+cursor = connection.cursor()
+
+
 # reads every line and calls other function to parse each of them
 def parser(filename):
     file = open(filename, 'r')
-    for line in file:
-        parse_metar(line)
+    lines = file.readlines()
+    for line in reversed(lines):
+        parsed_metar = parse_metar(line)
+        if len(parsed_metar) == 38:
+            add_metar_into_table(parsed_metar)
     file.close()
-
-
-# parser("metars1.txt")
-# parse_metar("202206131430 METAR LRCL 131430Z 26003KT 200V340 9999 FEW065 25/17 Q1013=")
-# pattern = r'^[0-9]{5}KT$'
-# match = re.match(pattern, '12345KT')
-
-# connection = database_connection()
-# cursor = connection.cursor()
-# cursor.execute(""" insert into test (val) values (%s)""", (1111,))
-# connection.commit()
-# disconnect_from_database(connection)
-
-print(len(parse_metar("202406231730 METAR COR LRCL 231730Z 29005KT KAVOC 24/19 Q1012=")))
-# print(parse_metar("202111161000 METAR LRCL 161000Z 13009KT CAVOK 09/03 Q1028="))
-# print(len(parse_metar("202111221430 METAR LRCL 221430Z 12003KT 080V170 9999 FEW004 OVC007 04/03 Q1015=")))
-# print(len(parse_metar("202111161000 METAR LRCL 161000Z 13009KT CAVOK 09/03 Q1028=")))
-# print(len(parse_metar("202111231900 METAR COR LRCL 231900Z VRB08G18KT 1000 R25/1300 M00/M02 Q1025=")))
-# line_nr = 0
-# file = open("metars2.txt", 'r')
-# for line in file:
-#     line_nr += 1
-#     if len(parse_metar(line)) != 38:
-#         print(line, '+', line_nr)
-# file.close()
-# print(len(parse_metar("202302250430 METAR LRCL 250430Z 26004KT 5000 2000E BR BKN047 02/02 Q1000=")))
+    disconnect_from_database(connection)
