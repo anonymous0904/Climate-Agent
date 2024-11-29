@@ -305,3 +305,12 @@ class TafParserTest(unittest.TestCase):
                            True, 24, False, 200, "FG", "+RAFG", "BCFG", "SCT", 45, True, "FEW", 135, True, "BKN",
                            1, True, 1]
         self.assertEqual(expected_result, actual_result)
+
+    def testProb30Tempo(self):
+        actual_result = taf_parser.parse_taf_prob(datetime.datetime(2021, 9, 12, 17, 0),
+                                                  "PROB30 TEMPO 1223/1303 5000 BR")
+        expected_result = [30, "TEMPO", datetime.datetime(2021, 9, 12, 23), datetime.datetime(2021, 9, 13, 3), None,
+                           None,
+                           False, None, False, 5000, "BR", None, None, None, None, False, None, None, False, None,
+                           None, False, None]
+        self.assertEqual(expected_result, actual_result)
