@@ -293,7 +293,7 @@ def parse_taf_prob(datetime, taf_prob):
 
         return final_taf_prob_vector
         # final_taf_prob_vector = final_taf_prob_vector + parse_taf(' '.join(taf_prob_elements))
-    except Exception as e:
+    except Exception:
         return final_taf_prob_vector
 
 
@@ -355,18 +355,13 @@ def taf_parser(filename):
         taf_elements = parse_code(taf_code)
         parsed_taf = parse_taf(taf_elements[0])
         if len(parsed_taf) == 23:
-            # print(parsed_taf)
             add_taf_to_table(parsed_taf)
         datetime = parser.string_to_datetime(taf_elements[0][0:12])
         taf_elements = taf_elements[1:]
         for taf_prob in taf_elements:
             parsed_taf_prob = parse_taf_prob(datetime, taf_prob)
             if len(parsed_taf_prob) == 23:
-                # print(parsed_taf_prob)
                 add_taf_prob_to_table(datetime, parsed_taf_prob)
-
-    # for i in range(100):
-    #     print(taf_codes[i])
 
     file.close()
     cursor.close()
@@ -374,8 +369,3 @@ def taf_parser(filename):
 
 
 taf_parser("tafs.txt")
-# s = """202309241100 TAF LRCL 241100Z 2412/2421 VRB04KT 9999 SCT050
-#                       TEMPO 2412/2415 VRB15G25KT 5000 TSRA BKN010
-#                        BKN030CB
-#                       BECMG 2413/2415 30010KT="""
-# print(s.replace('\n', ' '))
