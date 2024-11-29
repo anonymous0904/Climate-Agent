@@ -2,9 +2,8 @@ import re
 
 from Parser import parser
 
-
-# connection = parser.database_connection()
-# cursor = connection.cursor()
+connection = parser.database_connection()
+cursor = connection.cursor()
 
 
 def parse_taf(taf):
@@ -34,7 +33,10 @@ def parse_taf(taf):
 
     # get rid of ICAO code and redundant observation time
     try:
-        taf_elements = taf_elements[2:]
+        if taf_elements[0] == "LRCL" and re.match("^[0-9]{6}Z$", taf_elements[1]):
+            taf_elements = taf_elements[2:]
+        else:  # invalid code
+            return final_taf_vector
     except Exception as e:
         print(e.args, ':' + taf)
         return final_taf_vector
@@ -316,57 +318,59 @@ def parse_code(taf):
     return taf_vector
 
 
-# def add_taf_to_table(taf):
-#     insert_query = """INSERT INTO tafs (datetime,message_type, start_datetime,end_datetime,wind_direction,wind_speed,
-#     wind_variability,gust_speed,cavok,horizontal_visibility,
-#     present_phenomena_1,present_phenomena_2,present_phenomena_3,cloud_nebulosity_1,cloud_altitude_1,cb_1,
-#     cloud_nebulosity_2,cloud_altitude_2,cb_2,cloud_nebulosity_3,cloud_altitude_3,cb_3,
-#     vertical_visibility)
-#     values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-#     query_values = tuple(taf)
-#     cursor.execute(insert_query, query_values)
-#     connection.commit()
+def add_taf_to_table(taf):
+    insert_query = """INSERT INTO tafs (datetime,message_type, start_datetime,end_datetime,wind_direction,wind_speed,
+    wind_variability,gust_speed,cavok,horizontal_visibility,
+    present_phenomena_1,present_phenomena_2,present_phenomena_3,cloud_nebulosity_1,cloud_altitude_1,cb_1,
+    cloud_nebulosity_2,cloud_altitude_2,cb_2,cloud_nebulosity_3,cloud_altitude_3,cb_3,
+    vertical_visibility)
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    query_values = tuple(taf)
+    cursor.execute(insert_query, query_values)
+    connection.commit()
 
 
-# def add_taf_prob_to_table(datetime, taf_prob):
-#     select_query = f"SELECT id FROM tafs WHERE datetime='{datetime}'"
-#     cursor.execute(select_query)
-#     taf_id = cursor.fetchall()[0]
-#     query_values = tuple([taf_id] + taf_prob)
-#     insert_query = """INSERT INTO taf_probs( taf_id, probability, probability_type, start_time, end_time,
-#     wind_direction, wind_speed, wind_variability, gust_speed,
-#     cavok, horizontal_visibility, present_phenomena_1, present_phenomena_2, present_phenomena_3, cloud_nebulosity_1,
-#     cloud_altitude_1, cb_1, cloud_nebulosity_2, cloud_altitude_2, cb_2, cloud_nebulosity_3,
-#     cloud_altitude_3, cb_3, vertical_visibility) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-#     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """
-#     cursor.execute(insert_query, query_values)
-#     connection.commit()
+def add_taf_prob_to_table(datetime, taf_prob):
+    select_query = f"SELECT id FROM tafs WHERE datetime='{datetime}'"
+    cursor.execute(select_query)
+    content = cursor.fetchall()
+    if len(content) > 0:
+        taf_id = content[0]
+        query_values = tuple([taf_id] + taf_prob)
+        insert_query = """INSERT INTO taf_probs( taf_id, probability, probability_type, start_time, end_time,
+        wind_direction, wind_speed, wind_variability, gust_speed,
+        cavok, horizontal_visibility, present_phenomena_1, present_phenomena_2, present_phenomena_3, cloud_nebulosity_1,
+        cloud_altitude_1, cb_1, cloud_nebulosity_2, cloud_altitude_2, cb_2, cloud_nebulosity_3,
+        cloud_altitude_3, cb_3, vertical_visibility) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """
+        cursor.execute(insert_query, query_values)
+        connection.commit()
 
 
 def taf_parser(filename):
     file = open(filename, 'r')
     content = file.read()
     taf_codes = content.replace('\n', ' ').split('=')[:-1]  # remove last element which is an empty string
-    for taf_code in taf_codes:
+    for taf_code in reversed(taf_codes):
         taf_elements = parse_code(taf_code)
         parsed_taf = parse_taf(taf_elements[0])
-        if len(parsed_taf) != 23:
-            print(taf_elements[0])
-            # add_taf_to_table(parsed_taf)
+        if len(parsed_taf) == 23:
+            # print(parsed_taf)
+            add_taf_to_table(parsed_taf)
         datetime = parser.string_to_datetime(taf_elements[0][0:12])
         taf_elements = taf_elements[1:]
         for taf_prob in taf_elements:
             parsed_taf_prob = parse_taf_prob(datetime, taf_prob)
-            if len(parsed_taf_prob) != 23:
-                print(taf_prob)
-                # add_taf_prob_to_table(datetime,parsed_taf_prob)
+            if len(parsed_taf_prob) == 23:
+                # print(parsed_taf_prob)
+                add_taf_prob_to_table(datetime, parsed_taf_prob)
 
     # for i in range(100):
     #     print(taf_codes[i])
 
     file.close()
-    # cursor.close()
-    # parser.disconnect_from_database(connection)
+    cursor.close()
+    parser.disconnect_from_database(connection)
 
 
 taf_parser("tafs.txt")
