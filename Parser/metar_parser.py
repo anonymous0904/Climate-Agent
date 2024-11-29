@@ -1,29 +1,8 @@
-import psycopg2
 import re
 
-from Parser.parser import string_to_datetime, parse_wind
-
-
-# returns the connection to the WeatherForecast database
-def database_connection():
-    try:
-        db_connection = psycopg2.connect(
-            host="localhost",
-            database="WeatherForecast",
-            user="postgres",
-            password="castravete",
-            port=5432
-        )
-        print("Connected to the database.")
-        return db_connection
-    except psycopg2.OperationalError as e:
-        print(f"Error: {e}")
-        return None
-
-
-def disconnect_from_database(connection):
-    connection.close()
-    print("Disconnected from the database.")
+import Parser.parser
+from Parser import parser
+from Parser.parser import string_to_datetime, parse_wind, database_connection, disconnect_from_database
 
 
 # metar is a vector with elements from the code,
@@ -169,20 +148,8 @@ def parse_metar(metar):
         else:  # no information about runway visibility
             final_metar_vector = final_metar_vector + 8 * [None]
 
-        # Present phenomena - up to 3
-        count = 0  # number of phenomena
-        for i in range(3):
-            if re.match("^(\+|-|VC)", metar_elements[0]) or re.match("^[A-Z]{2}$", metar_elements[0]) or re.match(
-                    "[A-Z]{4}", metar_elements[0]):
-                final_metar_vector.append(metar_elements[0])
-                metar_elements = metar_elements[1:]
-                count += 1
-            else:
-                break
-
-        while count < 3:  # for less than 3 phenomena
-            final_metar_vector.append(None)
-            count += 1
+        # present phenomena - up to 3
+        metar_elements, final_metar_vector = parser.present_phenomena(metar_elements, final_metar_vector)
 
         # Clouds
         count = 0  # number of layers
@@ -233,13 +200,8 @@ def parse_metar(metar):
         else:
             final_metar_vector.append(None)
 
-        # Vertical visibility
-        if re.match("^VV[0-9]{3}$", metar_elements[0]):
-            vertical_visibility = metar_elements[0][-3:]
-            metar_elements = metar_elements[1:]
-            final_metar_vector.append(int(vertical_visibility))
-        else:
-            final_metar_vector.append(None)  # no vertical visibility
+        # vertical visibility
+        metar_elements, final_metar_vector = parser.vertical_visibility(metar_elements, final_metar_vector)
 
     # End of no CAVOK
 
@@ -272,7 +234,7 @@ cursor = connection.cursor()
 
 
 # reads every line and calls other function to parse each of them
-def parser(filename):
+def metar_parser(filename):
     file = open(filename, 'r')
     lines = file.readlines()
     for line in reversed(lines):
