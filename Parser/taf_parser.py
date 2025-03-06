@@ -366,6 +366,3 @@ def taf_parser(filename):
     file.close()
     cursor.close()
     parser.disconnect_from_database(connection)
-
-
-taf_parser("tafs.txt")

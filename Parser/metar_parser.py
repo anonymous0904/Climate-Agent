@@ -1,6 +1,5 @@
 import re
 
-import Parser.parser
 from Parser import parser
 from Parser.parser import string_to_datetime, parse_wind, database_connection, disconnect_from_database
 
