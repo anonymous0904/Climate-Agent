@@ -37,3 +37,18 @@ class DatabaseHandler:
     def close_connection(self):
         self.connection.close()
         print("Disconnected from the database.")
+
+    # missing values can appear as None or NaN (not a number)
+    def get_metars_df(self):
+        self.connect_to_database()
+        metars_df = self.execute_query("""SELECT * FROM metars""")
+        self.close_connection()
+        return metars_df
+
+    # missing values can appear as None or NaN (not a number)
+    def get_tafs_df(self):
+        self.connect_to_database()
+        # fetch the tafs together with probable phenomena
+        tafs_df = self.execute_query("""SELECT * FROM tafs t, taf_probs tp where t.id = tp.taf_id""")
+        self.close_connection()
+        return tafs_df
