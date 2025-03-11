@@ -1,0 +1,24 @@
+import DatabaseHandler
+
+
+# match metars to the tafs based on the observation time
+# output: dictionary{ taf_id: list of matching metar ids }
+def match_metar_to_taf():
+    tafs = DatabaseHandler.DatabaseHandler().get_tafs_df()  # .sort_values('start_datetime')
+    matched_data = {}
+    database_handler = DatabaseHandler.DatabaseHandler()
+    database_handler.connect_to_database()
+
+    for index, taf in tafs.iterrows():
+        taf_id = taf.iloc[0]  # index of the id column in the tafs data frame
+        start_time = str(taf.iloc[3])  # index of the start_time column in the tafs data frame
+        end_time = str(taf.iloc[4])  # index of the end_time column in the tafs data frame
+        metar_ids_df = database_handler.execute_query_return_list(
+            """select id from metars where observation_time between""" + "'" + start_time + "'" + """and""" + "'" + end_time + "'")
+        matched_data[taf_id] = metar_ids_df
+
+    database_handler.close_connection()
+    return matched_data
+
+
+print(match_metar_to_taf())

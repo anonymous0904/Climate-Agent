@@ -20,7 +20,7 @@ class DatabaseHandler:
         except psycopg2.OperationalError as e:
             print(f"Error: {e}")
 
-    def execute_query(self, query):
+    def execute_query_return_df(self, query):
         if not self.connection:
             print('Not connected to WeatherForecast database')
             return
@@ -34,6 +34,18 @@ class DatabaseHandler:
         except psycopg2.Error:
             print(f'Error executing query')
 
+    def execute_query_return_list(self, query):
+        if not self.connection:
+            print('Not connected to WeatherForecast database')
+            return
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(query)
+            data = cursor.fetchall()
+            return data
+        except psycopg2.Error:
+            print(f'Error executing query')
+
     def close_connection(self):
         self.connection.close()
         print("Disconnected from the database.")
@@ -41,14 +53,20 @@ class DatabaseHandler:
     # missing values can appear as None or NaN (not a number)
     def get_metars_df(self):
         self.connect_to_database()
-        metars_df = self.execute_query("""SELECT * FROM metars""")
+        metars_df = self.execute_query_return_df("""SELECT * FROM metars""")
         self.close_connection()
         return metars_df
 
     # missing values can appear as None or NaN (not a number)
-    def get_tafs_df(self):
+    def get_tafs_with_probs_df(self):
         self.connect_to_database()
         # fetch the tafs together with probable phenomena
-        tafs_df = self.execute_query("""SELECT * FROM tafs t, taf_probs tp where t.id = tp.taf_id""")
+        tafs_df = self.execute_query_return_df("""SELECT * FROM tafs t, taf_probs tp where t.id = tp.taf_id""")
+        self.close_connection()
+        return tafs_df
+
+    def get_tafs_df(self):
+        self.connect_to_database()
+        tafs_df = self.execute_query_return_df("""SELECT * FROM tafs""")
         self.close_connection()
         return tafs_df
