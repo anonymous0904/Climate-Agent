@@ -81,5 +81,20 @@ class DatabaseHandler:
         self.close_connection()
         return tafs_metars_df
 
-# database_handler = DatabaseHandler()
-# print(database_handler.get_tafs_with_probs_df().columns)
+    # fetch the taf probs together with the corresponding metars based on the observation time
+    def get_taf_probs_metars_df(self):
+        self.connect_to_database()
+        taf_probs_metars_df = self.execute_query_return_df(
+            """SELECT * FROM taf_probs tp, metars m where m.observation_time between tp.start_time and tp.end_time""")
+        self.close_connection()
+        return taf_probs_metars_df
+
+    # fetch all the tafs joined with taf_probs (including those without probable phenomena) joined with metars
+    # based on the observation time
+    def get_taf_with_probs_and_metars_df(self):
+        self.connect_to_database()
+        taf_with_probs_metars_df = self.execute_query_return_df("""select * from tafs t left join taf_probs tp on 
+        t.id=tp.taf_id inner join metars m on m.observation_time between t.start_datetime and t.end_datetime 
+        order by t.id""")
+        self.close_connection()
+        return taf_with_probs_metars_df

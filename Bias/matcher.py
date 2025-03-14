@@ -23,12 +23,3 @@ class Matcher:
 
         self.database_handler.close_connection()
         return matched_data
-
-    # variabile de baza: predominant_horizontal_visibility, wind_speed,
-    # wind_variability(true/false), wind_direction(can be null), weather_phenomena(can be null), clouds(can be null),
-    # date in plus: sezon, ora din zi, air_temperature, dew_point, air_pressure
-    # todo - o functie ce itereaza prin fiecare taf (fara probs) si care potriveste variabilele cu cele de la metar.
-    #  functia verifica in prealabil daca taful contine si probs si le ia in considerare si pe acestea, verifica si daca
-    #  metarul este in intervalul de timp al taf-ului
-
-# print(match_metar_to_taf())
