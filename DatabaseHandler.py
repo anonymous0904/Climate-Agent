@@ -100,4 +100,7 @@ class DatabaseHandler:
         return taf_with_probs_metars_df
 
 
-print(DatabaseHandler().get_taf_with_probs_and_metars_df().columns)
+col = 0
+for column in DatabaseHandler().get_taf_with_probs_and_metars_df().columns:
+    print(col, column)
+    col += 1
