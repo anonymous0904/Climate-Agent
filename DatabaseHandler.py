@@ -98,9 +98,3 @@ class DatabaseHandler:
         order by t.id""")
         self.close_connection()
         return taf_with_probs_metars_df
-
-
-col = 0
-for column in DatabaseHandler().get_taf_with_probs_and_metars_df().columns:
-    print(col, column)
-    col += 1

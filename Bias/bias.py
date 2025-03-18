@@ -10,7 +10,7 @@ class Bias:
 
     def __init__(self):
         self.database_handler = DatabaseHandler.DatabaseHandler()
-        self.tafs_metars_df = self.database_handler.get_taf_probs_metars_df()
+        self.tafs_metars_df = self.database_handler.get_taf_with_probs_and_metars_df()
 
     def apply_errors_to_dataframe(self):
         self.tafs_metars_df['month'] = self.tafs_metars_df.apply(get_month_of_the_row, axis=1)

@@ -13,30 +13,31 @@
 # ** PRECIPITATII: RA(ploaie),SH(averse),DZ(burnita)
 
 # calculate the difference between the forecasted and observed values
+# TODO - check for the direction variations - in metar pot sa existe valori atat pentru wind_direction, cat si pentru intervalul lower-upper
 def calculate_taf_wind_direction_error_for_row(row):
-    if row['wind_direction'][2] is None:  # if there is variation in the wind direction
+    if row.iloc[53] is None:  # if there is variation in the wind direction
         # (the correct value should be between 60 and 180 degrees)
-        if row['wind_direction'][0] is not None and row['wind_direction'][0] < row['lower_direction_variation']:
-            return row['wind_direction'][0] - row['lower_direction_variation']
-        elif row['wind_direction'][0] is not None and row['wind_direction'][0] > row['upper_direction_variation']:
-            return row['wind_direction'][0] - row['upper_direction_variation']
+        if row.iloc[5] is not None and row.iloc[5] < row.iloc[57]:
+            return row.iloc[5] - row.iloc[57]
+        elif row.iloc[5] is not None and row.iloc[5] > row.iloc[58]:
+            return row.iloc[5] - row.iloc[58]
 
-    if row['wind_direction'][0] is not None:
-        return row['wind_direction'][0] - row['wind_direction'][2]
+    if row.iloc[5] is not None:
+        return row.iloc[5] - row.iloc[53]
     else:
         return None  # no data for the variable
 
 
 def calculate_taf_prob_wind_direction_error_for_row(row):
-    if row['wind_direction'][2] is None:  # if there is variation in the wind direction
+    if row.iloc[53] is None:  # if there is variation in the wind direction
         # (the correct value should be between 60 and 180 degrees)
-        if row['wind_direction'][1] is not None and row['wind_direction'][1] < row['lower_direction_variation']:
-            return row['wind_direction'][1] - row['lower_direction_variation']
-        elif row['wind_direction'][1] is not None and row['wind_direction'][1] > row['upper_direction_variation']:
-            return row['wind_direction'][1] - row['upper_direction_variation']
+        if row.iloc[30] is not None and row.iloc[30] < row.iloc[57]:
+            return row.iloc[30] - row.iloc[57]
+        elif row.iloc[30] is not None and row.iloc[30] > row.iloc[58]:
+            return row.iloc[30] - row.iloc[58]
 
-    if row['wind_direction'][1] is not None:
-        return row['wind_direction'][1] - row['wind_direction'][2]
+    if row.iloc[30] is not None:
+        return row.iloc[30] - row.iloc[53]
     else:
         return None  # no data for the variable
 
@@ -81,19 +82,19 @@ def calculate_taf_prob_wind_direction_error_for_row(row):
 
 
 def calculate_taf_wind_speed_error_for_row(row):
-    if row['wind_speed'][2] is None:
+    if row.iloc[54] is None:
         return None
-    if row['wind_speed'][0] is not None:
-        return row['wind_speed'][0] - row['wind_speed'][2]
+    if row.iloc[6] is not None:
+        return row.iloc[6] - row.iloc[54]
     else:
         return None
 
 
 def calculate_taf_prob_wind_speed_error_for_row(row):
-    if row['wind_speed'][2] is None:
+    if row.iloc[54] is None:
         return None
-    if row['wind_speed'][1] is not None:
-        return row['wind_speed'][1] - row['wind_speed'][2]
+    if row.iloc[31] is not None:
+        return row.iloc[31] - row.iloc[54]
     else:
         return None
 
@@ -101,10 +102,10 @@ def calculate_taf_prob_wind_speed_error_for_row(row):
 # direction variability
 def calculate_taf_wind_variability_error_for_row(row):
     # forecasted wind variability that did not occur
-    if row['wind_variability'][0] == True and row['wind_variability'][2] == False:
+    if row.iloc[7] == True and row.iloc[55] == False:
         return 1
     # did not forecast wind variability but it did occur
-    elif row['wind_variability'][0] == False and row['wind_variability'][2] == True:
+    elif row.iloc[7] == False and row.iloc[55] == True:
         return -1
     # correct forecast
     else:
@@ -113,10 +114,10 @@ def calculate_taf_wind_variability_error_for_row(row):
 
 def calculate_taf_prob_wind_variability_error_for_row(row):
     # forecasted wind variability that did not occur
-    if row['wind_variability'][1] == True and row['wind_variability'][2] == False:
+    if row.iloc[32] == True and row.iloc[55] == False:
         return 1
     # did not forecast wind variability but it did occur
-    elif row['wind_variability'][1] == False and row['wind_variability'][2] == True:
+    elif row.iloc[32] == False and row.iloc[55] == True:
         return -1
     # correct forecast
     else:
@@ -124,44 +125,44 @@ def calculate_taf_prob_wind_variability_error_for_row(row):
 
 
 def calculate_taf_gust_speed_error_for_row(row):
-    if row['gust_speed'][0] is not None and row['gust_speed'][2] is not None:
-        return row['gust_speed'][0] - row['gust_speed'][2]
+    if row.iloc[8] is not None and row.iloc[56] is not None:
+        return row.iloc[8] - row.iloc[56]
     else:
         return None
 
 
 def calculate_taf_prob_gust_speed_error_for_row(row):
-    if row['gust_speed'][1] is not None and row['gust_speed'][2] is not None:
-        return row['gust_speed'][1] - row['gust_speed'][2]
+    if row.iloc[33] is not None and row.iloc[56] is not None:
+        return row.iloc[33] - row.iloc[56]
     else:
         return None
 
 
 def calculate_taf_horizontal_visibility_error_for_row(row):
-    return row['horizontal_visibility'][0] - row['predominant_horizontal_visibility']
+    return row.iloc[10] - row.iloc[60]
 
 
 def calculate_taf_prob_horizontal_visibility_error_for_row(row):
-    if row['horizontal_visibility'][1] is not None:
-        return row['horizontal_visibility'][1] - row['predominant_horizontal_visibility']
+    if row.iloc[35] is not None:
+        return row.iloc[35] - row.iloc[60]
 
 
 def calculate_taf_rainfall_error_for_row(row):
     rainfall_codes = ["DZ", "RA", "SN", "SG", "IC", "PL", "GR", "GS", "UP", "SH"]
-    taf_phenomena_1 = row['present_phenomena_1'][0]
-    taf_phenomena_2 = row['present_phenomena_2'][0]
-    taf_phenomena_3 = row['present_phenomena_3'][0]
-    metar_phenomena_1 = row['present_phenomena_1'][2]
-    metar_phenomena_2 = row['present_phenomena_2'][2]
-    metar_phenomena_3 = row['present_phenomena_3'][2]
+    taf_phenomena_1 = row.iloc[11]
+    taf_phenomena_2 = row.iloc[12]
+    taf_phenomena_3 = row.iloc[13]
+    metar_phenomena_1 = row.iloc[71]
+    metar_phenomena_2 = row.iloc[72]
+    metar_phenomena_3 = row.iloc[73]
 
     if any(rainfall_code in taf_phenomenon for rainfall_code in rainfall_codes for taf_phenomenon in
-           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3]):
+           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3] if taf_phenomenon is not None):
         rainfall_forecasted = True
     else:
         rainfall_forecasted = False
     if any(rainfall_code in metar_phenomenon for rainfall_code in rainfall_codes for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3]):
+           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         rainfall_occurred = True
     else:
         rainfall_occurred = False
@@ -176,20 +177,20 @@ def calculate_taf_rainfall_error_for_row(row):
 
 def calculate_taf_prob_rainfall_error_for_row(row):
     rainfall_codes = ["DZ", "RA", "SN", "SG", "IC", "PL", "GR", "GS", "UP", "SH"]
-    taf_phenomena_1 = row['present_phenomena_1'][1]
-    taf_phenomena_2 = row['present_phenomena_2'][1]
-    taf_phenomena_3 = row['present_phenomena_3'][1]
-    metar_phenomena_1 = row['present_phenomena_1'][2]
-    metar_phenomena_2 = row['present_phenomena_2'][2]
-    metar_phenomena_3 = row['present_phenomena_3'][2]
+    taf_phenomena_1 = row.iloc[36]
+    taf_phenomena_2 = row.iloc[37]
+    taf_phenomena_3 = row.iloc[38]
+    metar_phenomena_1 = row.iloc[71]
+    metar_phenomena_2 = row.iloc[72]
+    metar_phenomena_3 = row.iloc[73]
 
     if any(rainfall_code in taf_phenomenon for rainfall_code in rainfall_codes for taf_phenomenon in
-           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3]):
+           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3] if taf_phenomenon is not None):
         rainfall_forecasted = True
     else:
         rainfall_forecasted = False
     if any(rainfall_code in metar_phenomenon for rainfall_code in rainfall_codes for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3]):
+           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         rainfall_occurred = True
     else:
         rainfall_occurred = False
@@ -204,20 +205,20 @@ def calculate_taf_prob_rainfall_error_for_row(row):
 
 def calculate_taf_fog_error_for_row(row):
     fog_codes = ["BR", "FG"]
-    taf_phenomena_1 = row['present_phenomena_1'][0]
-    taf_phenomena_2 = row['present_phenomena_2'][0]
-    taf_phenomena_3 = row['present_phenomena_3'][0]
-    metar_phenomena_1 = row['present_phenomena_1'][2]
-    metar_phenomena_2 = row['present_phenomena_2'][2]
-    metar_phenomena_3 = row['present_phenomena_3'][2]
+    taf_phenomena_1 = row.iloc[11]
+    taf_phenomena_2 = row.iloc[12]
+    taf_phenomena_3 = row.iloc[13]
+    metar_phenomena_1 = row.iloc[71]
+    metar_phenomena_2 = row.iloc[72]
+    metar_phenomena_3 = row.iloc[73]
 
     if any(fog_code in taf_phenomenon for fog_code in fog_codes for taf_phenomenon in
-           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3]):
+           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3] if taf_phenomenon is not None):
         fog_forecasted = True
     else:
         fog_forecasted = False
     if any(fog_code in metar_phenomenon for fog_code in fog_codes for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3]):
+           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         fog_occurred = True
     else:
         fog_occurred = False
@@ -232,20 +233,20 @@ def calculate_taf_fog_error_for_row(row):
 
 def calculate_taf_prob_fog_error_for_row(row):
     fog_codes = ["BR", "FG"]
-    taf_phenomena_1 = row['present_phenomena_1'][1]
-    taf_phenomena_2 = row['present_phenomena_2'][1]
-    taf_phenomena_3 = row['present_phenomena_3'][1]
-    metar_phenomena_1 = row['present_phenomena_1'][2]
-    metar_phenomena_2 = row['present_phenomena_2'][2]
-    metar_phenomena_3 = row['present_phenomena_3'][2]
+    taf_phenomena_1 = row.iloc[36]
+    taf_phenomena_2 = row.iloc[37]
+    taf_phenomena_3 = row.iloc[38]
+    metar_phenomena_1 = row.iloc[71]
+    metar_phenomena_2 = row.iloc[72]
+    metar_phenomena_3 = row.iloc[73]
 
     if any(fog_code in taf_phenomenon for fog_code in fog_codes for taf_phenomenon in
-           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3]):
+           [taf_phenomena_1, taf_phenomena_2, taf_phenomena_3] if taf_phenomenon is not None):
         fog_forecasted = True
     else:
         fog_forecasted = False
     if any(fog_code in metar_phenomenon for fog_code in fog_codes for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3]):
+           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         fog_occurred = True
     else:
         fog_occurred = False
@@ -261,12 +262,12 @@ def calculate_taf_prob_fog_error_for_row(row):
 # calculate the sum of the cloud cover for all the layers
 def calculate_taf_cloud_nebulosity_error_for_row(row):
     cloud_nebulosity_mapping = {'FEW': 1, 'SCT': 2, 'BKN': 3, 'OVC': 4}
-    taf_cloud_nebulosity_1 = row['cloud_nebulosity_1'][0]
-    taf_cloud_nebulosity_2 = row['cloud_nebulosity_2'][0]
-    taf_cloud_nebulosity_3 = row['cloud_nebulosity_3'][0]
-    metar_cloud_nebulosity_1 = row['cloud_nebulosity_1'][2]
-    metar_cloud_nebulosity_2 = row['cloud_nebulosity_2'][2]
-    metar_cloud_nebulosity_3 = row['cloud_nebulosity_3'][2]
+    taf_cloud_nebulosity_1 = row.iloc[14]
+    taf_cloud_nebulosity_2 = row.iloc[17]
+    taf_cloud_nebulosity_3 = row.iloc[20]
+    metar_cloud_nebulosity_1 = row.iloc[74]
+    metar_cloud_nebulosity_2 = row.iloc[77]
+    metar_cloud_nebulosity_3 = row.iloc[80]
 
     total_taf_nebulosity_sum = 0
     if taf_cloud_nebulosity_1 is not None:
@@ -289,12 +290,12 @@ def calculate_taf_cloud_nebulosity_error_for_row(row):
 
 def calculate_taf_prob_cloud_nebulosity_error_for_row(row):
     cloud_nebulosity_mapping = {'FEW': 1, 'SCT': 2, 'BKN': 3, 'OVC': 4}
-    taf_cloud_nebulosity_1 = row['cloud_nebulosity_1'][1]
-    taf_cloud_nebulosity_2 = row['cloud_nebulosity_2'][1]
-    taf_cloud_nebulosity_3 = row['cloud_nebulosity_3'][1]
-    metar_cloud_nebulosity_1 = row['cloud_nebulosity_1'][2]
-    metar_cloud_nebulosity_2 = row['cloud_nebulosity_2'][2]
-    metar_cloud_nebulosity_3 = row['cloud_nebulosity_3'][2]
+    taf_cloud_nebulosity_1 = row.iloc[39]
+    taf_cloud_nebulosity_2 = row.iloc[42]
+    taf_cloud_nebulosity_3 = row.iloc[45]
+    metar_cloud_nebulosity_1 = row.iloc[74]
+    metar_cloud_nebulosity_2 = row.iloc[77]
+    metar_cloud_nebulosity_3 = row.iloc[80]
 
     total_taf_prob_nebulosity_sum = 0
     if taf_cloud_nebulosity_1 is not None:
@@ -317,12 +318,12 @@ def calculate_taf_prob_cloud_nebulosity_error_for_row(row):
 
 # calculate the difference between the lowest cloud altitudes
 def calculate_taf_lowest_cloud_altitude_error_for_row(row):
-    taf_cloud_altitude_1 = row['cloud_altitude_1'][0]
-    taf_cloud_altitude_2 = row['cloud_altitude_2'][0]
-    taf_cloud_altitude_3 = row['cloud_altitude_3'][0]
-    metar_cloud_altitude_1 = row['cloud_altitude_1'][2]
-    metar_cloud_altitude_2 = row['cloud_altitude_2'][2]
-    metar_cloud_altitude_3 = row['cloud_altitude_3'][2]
+    taf_cloud_altitude_1 = row.iloc[15]
+    taf_cloud_altitude_2 = row.iloc[18]
+    taf_cloud_altitude_3 = row.iloc[21]
+    metar_cloud_altitude_1 = row.iloc[75]
+    metar_cloud_altitude_2 = row.iloc[78]
+    metar_cloud_altitude_3 = row.iloc[81]
 
     min_taf_altitude = None
     if taf_cloud_altitude_1 is not None:
@@ -347,12 +348,12 @@ def calculate_taf_lowest_cloud_altitude_error_for_row(row):
 
 
 def calculate_taf_prob_lowest_cloud_altitude_error_for_row(row):
-    taf_cloud_altitude_1 = row['cloud_altitude_1'][1]
-    taf_cloud_altitude_2 = row['cloud_altitude_2'][1]
-    taf_cloud_altitude_3 = row['cloud_altitude_3'][1]
-    metar_cloud_altitude_1 = row['cloud_altitude_1'][2]
-    metar_cloud_altitude_2 = row['cloud_altitude_2'][2]
-    metar_cloud_altitude_3 = row['cloud_altitude_3'][2]
+    taf_cloud_altitude_1 = row.iloc[40]
+    taf_cloud_altitude_2 = row.iloc[43]
+    taf_cloud_altitude_3 = row.iloc[46]
+    metar_cloud_altitude_1 = row.iloc[75]
+    metar_cloud_altitude_2 = row.iloc[78]
+    metar_cloud_altitude_3 = row.iloc[81]
 
     min_taf_altitude = None
     if taf_cloud_altitude_1 is not None:
@@ -377,12 +378,12 @@ def calculate_taf_prob_lowest_cloud_altitude_error_for_row(row):
 
 
 def calculate_taf_cloud_layers_error_for_row(row):
-    taf_cloud_layer_1 = row['cloud_nebulosity_1'][0]
-    taf_cloud_layer_2 = row['cloud_nebulosity_2'][0]
-    taf_cloud_layer_3 = row['cloud_nebulosity_3'][0]
-    metar_cloud_layer_1 = row['cloud_nebulosity_1'][2]
-    metar_cloud_layer_2 = row['cloud_nebulosity_2'][2]
-    metar_cloud_layer_3 = row['cloud_nebulosity_3'][2]
+    taf_cloud_layer_1 = row.iloc[14]
+    taf_cloud_layer_2 = row.iloc[17]
+    taf_cloud_layer_3 = row.iloc[20]
+    metar_cloud_layer_1 = row.iloc[74]
+    metar_cloud_layer_2 = row.iloc[77]
+    metar_cloud_layer_3 = row.iloc[80]
 
     taf_layer_count = 0
     metar_layer_count = 0
@@ -404,12 +405,12 @@ def calculate_taf_cloud_layers_error_for_row(row):
 
 
 def calculate_taf_prob_cloud_layers_error_for_row(row):
-    taf_cloud_layer_1 = row['cloud_nebulosity_1'][1]
-    taf_cloud_layer_2 = row['cloud_nebulosity_2'][1]
-    taf_cloud_layer_3 = row['cloud_nebulosity_3'][1]
-    metar_cloud_layer_1 = row['cloud_nebulosity_1'][2]
-    metar_cloud_layer_2 = row['cloud_nebulosity_2'][2]
-    metar_cloud_layer_3 = row['cloud_nebulosity_3'][2]
+    taf_cloud_layer_1 = row.iloc[40]
+    taf_cloud_layer_2 = row.iloc[43]
+    taf_cloud_layer_3 = row.iloc[46]
+    metar_cloud_layer_1 = row.iloc[74]
+    metar_cloud_layer_2 = row.iloc[77]
+    metar_cloud_layer_3 = row.iloc[80]
 
     taf_layer_count = 0
     metar_layer_count = 0
