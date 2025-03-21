@@ -7,14 +7,14 @@ from Parser.parser import string_to_datetime, parse_wind, database_connection, d
 # metar is a vector with elements from the code,
 # it inserts each variable to the corresponding fields of the table
 def add_metar_into_table(metar):
-    insert_query = """INSERT INTO metars (observation_time, message_type, message_callsign, wind_direction, 
-    wind_speed, wind_variability, gust_speed, lower_direction_variation, upper_direction_variation, cavok, 
+    insert_query = """INSERT INTO metars (observation_time, message_type, message_callsign, wind_direction,
+    wind_speed, wind_variability, gust_speed, lower_direction_variation, upper_direction_variation, cavok,
     predominant_horizontal_visibility,directional_horizontal_visibility, directional_variation_visibility,
     runway_number,runway_visibility,visibility_indicator,tendency,minimal_runway_visibility,maximal_runway_visibility,
     minimal_indicator,maximal_indicator,present_phenomena_1,present_phenomena_2,present_phenomena_3,cloud_nebulosity_1,
     cloud_altitude_1,cloud_type_1,cloud_nebulosity_2,cloud_altitude_2,cloud_type_2,cloud_nebulosity_3,cloud_altitude_3,
-    cloud_type_3,no_cloud,vertical_visibility,air_temperature,dew_point,air_pressure) 
-    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+    cloud_type_3,no_cloud,vertical_visibility,air_temperature,dew_point,air_pressure)
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     query_values = tuple(metar)
     cursor.execute(insert_query, query_values)

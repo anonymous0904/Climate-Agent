@@ -1,0 +1,1 @@
+# observation_time,wind_direction,wind_speed,predominant_horizontal_visibility,present_fog,precipitations,cloud_cover,cloud_altitude,air_temperature,dew_point,air_pressure

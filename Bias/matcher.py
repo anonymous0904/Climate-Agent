@@ -1,4 +1,4 @@
-import DatabaseHandler
+from Data import DatabaseHandler
 
 
 class Matcher:

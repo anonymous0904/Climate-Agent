@@ -1,12 +1,10 @@
-import DatabaseHandler
+from Data import DatabaseHandler
 import keras.src.models
-from tensorflow.python.keras.models import load_model
 from keras.src.layers import *
 from keras.src.callbacks import ModelCheckpoint
 from keras.src.losses import MeanSquaredError
 from keras.src.metrics import RootMeanSquaredError
 from keras.src.optimizers import Adam
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

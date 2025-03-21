@@ -1,5 +1,6 @@
-import DatabaseHandler
+from Data import DatabaseHandler
 from errors import *
+import pandas as pd
 
 
 # variabile de baza: predominant_horizontal_visibility, wind_direction(can be null), wind_speed,
@@ -13,8 +14,9 @@ class Bias:
         self.tafs_metars_df = self.database_handler.get_taf_with_probs_and_metars_df()
 
     def apply_errors_to_dataframe(self):
-        self.tafs_metars_df['month'] = self.tafs_metars_df.apply(get_month_of_the_row, axis=1)
         self.tafs_metars_df['season'] = self.tafs_metars_df.apply(get_season_of_the_row, axis=1)
+        self.tafs_metars_df['month'] = self.tafs_metars_df.apply(get_month_of_the_row, axis=1)
+        self.tafs_metars_df['time_of_day'] = self.tafs_metars_df.apply(get_time_of_day_for_row, axis=1)
         self.tafs_metars_df['taf_wind_direction_error'] = self.tafs_metars_df.apply(
             calculate_taf_wind_direction_error_for_row, axis=1)
         self.tafs_metars_df['taf_prob_wind_direction_error'] = self.tafs_metars_df.apply(
@@ -58,7 +60,24 @@ class Bias:
     def print_data_frame(self):
         print(self.tafs_metars_df)
 
+    def save_data_frame_to_h5_file(self):
+        self.tafs_metars_df = self.tafs_metars_df.reset_index(drop=True)
+        self.tafs_metars_df["wind_variability"] = self.tafs_metars_df["wind_variability"].astype(bool)
+        self.tafs_metars_df["cavok"] = self.tafs_metars_df["cavok"].astype(bool)
+        self.tafs_metars_df["cb_1"] = self.tafs_metars_df["cb_1"].astype(bool)
+        self.tafs_metars_df["cb_2"] = self.tafs_metars_df["cb_2"].astype(bool)
+        self.tafs_metars_df["cb_3"] = self.tafs_metars_df["cb_3"].astype(bool)
+        self.tafs_metars_df.to_hdf("data/errors.h5", key="bias", mode="w", format="table")
+        print("Data frame saved to file.")
 
-bias = Bias()
-bias.apply_errors_to_dataframe()
-bias.print_data_frame()
+    def read_data_frame_from_h5_file(self):
+        self.tafs_metars_df = pd.read_hdf("data/errors.h5", key="bias")
+
+    def read_columns_from_h5_file(self, columns):
+        self.tafs_metars_df = pd.read_hdf("data/errors.h5", key="bias", columns=columns)
+
+# bias = Bias()
+# bias.apply_errors_to_dataframe()
+# # bias.save_data_frame_to_h5_file()
+# # bias.read_data_frame_from_h5_file()
+# bias.print_data_frame()

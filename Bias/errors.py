@@ -13,31 +13,30 @@
 # ** PRECIPITATII: RA(ploaie),SH(averse),DZ(burnita)
 
 # calculate the difference between the forecasted and observed values
-# TODO - check for the direction variations - in metar pot sa existe valori atat pentru wind_direction, cat si pentru intervalul lower-upper
 def calculate_taf_wind_direction_error_for_row(row):
-    if row.iloc[53] is None:  # if there is variation in the wind direction
+    if row.iloc[53] % 360 is None:  # if there is variation in the wind direction
         # (the correct value should be between 60 and 180 degrees)
-        if row.iloc[5] is not None and row.iloc[5] < row.iloc[57]:
-            return row.iloc[5] - row.iloc[57]
+        if row.iloc[5] % 360 is not None and row.iloc[5] % 360 < row.iloc[57] % 360:
+            return row.iloc[5] % 360 - row.iloc[57] % 360
         elif row.iloc[5] is not None and row.iloc[5] > row.iloc[58]:
-            return row.iloc[5] - row.iloc[58]
+            return row.iloc[5] % 360 - row.iloc[58] % 360
 
-    if row.iloc[5] is not None:
-        return row.iloc[5] - row.iloc[53]
+    if row.iloc[5] % 360 is not None:
+        return row.iloc[5] % 360 - row.iloc[53] % 360
     else:
         return None  # no data for the variable
 
 
 def calculate_taf_prob_wind_direction_error_for_row(row):
-    if row.iloc[53] is None:  # if there is variation in the wind direction
+    if row.iloc[53] % 360 is None:  # if there is variation in the wind direction
         # (the correct value should be between 60 and 180 degrees)
-        if row.iloc[30] is not None and row.iloc[30] < row.iloc[57]:
-            return row.iloc[30] - row.iloc[57]
-        elif row.iloc[30] is not None and row.iloc[30] > row.iloc[58]:
-            return row.iloc[30] - row.iloc[58]
+        if row.iloc[30] % 360 is not None and row.iloc[30] % 360 < row.iloc[57] % 360:
+            return row.iloc[30] % 360 - row.iloc[57] % 360
+        elif row.iloc[30] % 360 is not None and row.iloc[30] % 360 > row.iloc[58] % 360:
+            return row.iloc[30] % 360 - row.iloc[58] % 360
 
-    if row.iloc[30] is not None:
-        return row.iloc[30] - row.iloc[53]
+    if row.iloc[30] % 360 is not None:
+        return row.iloc[30] % 360 - row.iloc[53] % 360
     else:
         return None  # no data for the variable
 
@@ -447,3 +446,15 @@ def get_season_of_the_row(row):
         return "summer"
     elif month in [9, 10, 11]:
         return "fall"
+
+
+def get_time_of_day_for_row(row):
+    hour = row['observation_time'].hour
+    if 6 <= hour < 11:
+        return 'morning'
+    elif 11 <= hour < 15:
+        return 'noon'
+    elif 18 <= hour < 24:
+        return 'evening'
+    else:
+        return 'night'
