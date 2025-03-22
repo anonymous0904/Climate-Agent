@@ -62,18 +62,18 @@ def average_cloud_nebulosity_for_observation(row):
 
 
 def average_cloud_altitude_for_observation(row):
-    metar_cloud_altitude_1 = row.iloc[26]
-    metar_cloud_altitude_2 = row.iloc[29]
-    metar_cloud_altitude_3 = row.iloc[32]
+    metar_cloud_altitude_1 = int(row.iloc[26])
+    metar_cloud_altitude_2 = int(row.iloc[29])
+    metar_cloud_altitude_3 = int(row.iloc[32])
     altitude_sum = 0
     layers = 0
-    if metar_cloud_altitude_1 is not None:
+    if metar_cloud_altitude_1 != 0:
         altitude_sum += metar_cloud_altitude_1
         layers += 1
-        if metar_cloud_altitude_2 is not None:
+        if metar_cloud_altitude_2 != 0:
             altitude_sum += metar_cloud_altitude_2
             layers += 1
-            if metar_cloud_altitude_3 is not None:
+            if metar_cloud_altitude_3 != 0:
                 altitude_sum += metar_cloud_altitude_3
                 layers += 1
 
@@ -85,6 +85,10 @@ def average_cloud_altitude_for_observation(row):
 
 def get_metar_data_frame():
     metars_df = DatabaseHandler().get_metars_df()[5290::2]  # starting from the first day of 2022 and taking every hour
+    metars_df[['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']] = metars_df[
+        ['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']].fillna(0).astype(int)
+    metars_df['wind_direction'] = metars_df['wind_direction'].fillna(0).astype(int)
+    metars_df['wind_speed'] = metars_df['wind_speed'].fillna(0).astype(int)
     metars_df['precipitation'] = metars_df.apply(precipitation_for_observation, axis=1)
     metars_df['present_fog'] = metars_df.apply(present_fog_for_observation, axis=1)
     metars_df['cloud_nebulosity'] = metars_df.apply(average_cloud_nebulosity_for_observation, axis=1)
@@ -93,6 +97,3 @@ def get_metar_data_frame():
         ['observation_time', 'wind_direction', 'wind_speed', 'predominant_horizontal_visibility', 'precipitation',
          'present_fog', 'cloud_nebulosity', 'cloud_altitude', 'air_temperature', 'dew_point', 'air_pressure']]
     return metars_df
-
-
-print(get_metar_data_frame()['cloud_altitude'])
