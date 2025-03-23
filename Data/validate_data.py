@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-import csv_file_handler
+import metar_data_frame
 
 
 # calculate the circular mean of a series
@@ -14,18 +13,18 @@ def circular_mean_wind_direction(direction_angles, w=None):
 
 
 def validate_wind_direction(data_frame):
-    missing_indices = data_frame[data_frame['wind_direction'] == 0].index
+    missing_indices = data_frame[data_frame['wind_direction'] == -1].index
 
     if missing_indices.empty:
         return data_frame
 
     wind_direction_to_validate = data_frame['wind_direction'].copy()
     for i in missing_indices:  # [missing_indices].index:
-        valid_before = data_frame['wind_direction'].loc[:i][data_frame['wind_direction'].loc[:i] != 0].index.tolist()
-        valid_after = data_frame['wind_direction'].loc[i:][data_frame['wind_direction'].loc[i:] != 0].index.tolist()
+        valid_before = data_frame['wind_direction'].loc[:i][data_frame['wind_direction'].loc[:i] != -1].index.tolist()
+        valid_after = data_frame['wind_direction'].loc[i:][data_frame['wind_direction'].loc[i:] != -1].index.tolist()
 
         if not valid_before or not valid_after:
-            wind_direction_to_validate.loc[i] = 0
+            wind_direction_to_validate.loc[i] = -1
             continue
 
         idx_before = valid_before[-1]
@@ -42,10 +41,14 @@ def validate_wind_direction(data_frame):
         weights = [weight_before, weight_after]
         wind_direction_to_validate.loc[i] = circular_mean_wind_direction(direction_angles, weights)
 
-    wind_direction_to_validate.loc[missing_indices[-1]] = wind_direction_to_validate.loc[missing_indices[-1] - 1]
+    last_missing_index = missing_indices[-1]
+    if wind_direction_to_validate.loc[last_missing_index] == -1:
+        wind_direction_to_validate.loc[last_missing_index] = wind_direction_to_validate[last_missing_index - 2]
+
     data_frame['wind_direction'] = wind_direction_to_validate.astype(int)
     return data_frame
 
 
-metar_df = csv_file_handler.read_metar_df_from_csv_file()
-print(validate_wind_direction(metar_df))
+def get_validated_metar_data_frame():
+    metar_df = metar_data_frame.get_metar_data_frame()
+    return validate_wind_direction(metar_df)

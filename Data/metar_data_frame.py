@@ -6,17 +6,19 @@ from Parser.metar_parser import metar_parser
 
 # replace the code for each precipitation type with a unique number via label-encoding
 def precipitation_for_observation(row):
-    precipitation_codes = ["RA", "SN"]
+    precipitation_codes = ["RA", "SH", "SN"]
     metar_phenomena_1 = row[['present_phenomena_1']]
     metar_phenomena_2 = row[['present_phenomena_2']]
     metar_phenomena_3 = row[['present_phenomena_3']]
     phenomenon_value = 0  # 0 - no present precipitation
 
-    if any(precipitation_codes[1] in metar_phenomenon for metar_phenomenon in
+    if any(precipitation_codes[2] in metar_phenomenon for metar_phenomenon in
            [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         phenomenon_value = 2  # 2 - snow
     elif any(precipitation_codes[0] in metar_phenomenon for metar_phenomenon in
-             [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
+             [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None) or any(
+        precipitation_codes[1] in metar_phenomenon for metar_phenomenon in
+        [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
         phenomenon_value = 1  # 1 - rain
 
     return phenomenon_value
@@ -84,11 +86,12 @@ def average_cloud_altitude_for_observation(row):
 
 
 def get_metar_data_frame():
-    metars_df = DatabaseHandler().get_metars_df()[5290::2]  # starting from the first day of 2022 and taking every hour
+    metars_df = DatabaseHandler().get_metars_df()[5290::2].sort_values(
+        'id')  # starting from the first day of 2022 and taking every hour
     metars_df[['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']] = metars_df[
         ['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']].fillna(0).astype(int)
-    metars_df['wind_direction'] = metars_df['wind_direction'].fillna(0).astype(int)
-    metars_df['wind_speed'] = metars_df['wind_speed'].fillna(0).astype(int)
+    metars_df['wind_direction'] = metars_df['wind_direction'].fillna(-1).astype(int)  # .fillna(0)
+    metars_df['wind_speed'] = metars_df['wind_speed'].astype(int)
     metars_df['precipitation'] = metars_df.apply(precipitation_for_observation, axis=1)
     metars_df['present_fog'] = metars_df.apply(present_fog_for_observation, axis=1)
     metars_df['cloud_nebulosity'] = metars_df.apply(average_cloud_nebulosity_for_observation, axis=1)
