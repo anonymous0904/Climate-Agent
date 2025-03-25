@@ -84,5 +84,21 @@ def plot_air_pressure():
     plt.ylabel('Luftdruck (hPa)')
     plt.show()
 
-
-plot_temperature()
+# def plot_precipitations():
+#     metars = csv_file_handler.read_metar_df_from_csv_file()
+#     metars.index = pd.to_datetime(metars['observation_time'], format="%Y-%m-%d %H:%M:%S")
+#     plt.figure(figsize=(8, 5))
+#     plt.plot(metars['observation_time'][metars['precipitation'] == 1],
+#              metars['precipitation'][metars['precipitation'] == 1],
+#              marker='o', linestyle='-', color='b', label='Regen')
+#     plt.plot(metars['observation_time'][metars['precipitation'] == 2],
+#              metars['precipitation'][metars['precipitation'] == 2],
+#              marker='o', linestyle='-', color='y', label='Schnee')
+#     plt.xlabel('Zeit')
+#     plt.ylabel('Phänomene')
+#     plt.title('Niederschläge im Laufe der Zeit')
+#     plt.grid(True)
+#     plt.show()
+#
+#
+# plot_precipitations()

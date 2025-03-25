@@ -3,33 +3,32 @@ from DatabaseHandler import DatabaseHandler
 
 # replace the code for each precipitation type with a unique number via label-encoding
 def precipitation_for_observation(row):
-    precipitation_codes = ["RA", "SH", "SN"]
-    metar_phenomena_1 = row[['present_phenomena_1']]
-    metar_phenomena_2 = row[['present_phenomena_2']]
-    metar_phenomena_3 = row[['present_phenomena_3']]
+    metar_phenomena_1 = str(row.iloc[22])
+    metar_phenomena_2 = str(row.iloc[23])
+    metar_phenomena_3 = str(row.iloc[24])
     phenomenon_value = 0  # 0 - no present precipitation
 
-    if any(precipitation_codes[2] in metar_phenomenon for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
-        phenomenon_value = 2  # 2 - snow
-    elif any(precipitation_codes[0] in metar_phenomenon for metar_phenomenon in
-             [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None) or any(
-        precipitation_codes[1] in metar_phenomenon for metar_phenomenon in
-        [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
+    if metar_phenomena_1 is None and metar_phenomena_2 is None and metar_phenomena_3 is None:
+        return phenomenon_value
+
+    if "RA" in metar_phenomena_1 or "RA" in metar_phenomena_2 or "RA" in metar_phenomena_3 or "SH" in metar_phenomena_1 or "SH" in metar_phenomena_2 or "SH" in metar_phenomena_3:
         phenomenon_value = 1  # 1 - rain
+    elif "SN" in metar_phenomena_1 or "SN" in metar_phenomena_2 or "SN" in metar_phenomena_3:
+        phenomenon_value = 2  # 2 - snow
 
     return phenomenon_value
 
 
 def present_fog_for_observation(row):
-    fog_codes = ["BR", "FG"]
-    metar_phenomena_1 = row[['present_phenomena_1']]
-    metar_phenomena_2 = row[['present_phenomena_2']]
-    metar_phenomena_3 = row[['present_phenomena_3']]
+    metar_phenomena_1 = str(row.iloc[22])
+    metar_phenomena_2 = str(row.iloc[23])
+    metar_phenomena_3 = str(row.iloc[24])
     present_fog = 0  # 0 for false
 
-    if any(fog_code in metar_phenomenon for fog_code in fog_codes for metar_phenomenon in
-           [metar_phenomena_1, metar_phenomena_2, metar_phenomena_3] if metar_phenomenon is not None):
+    if metar_phenomena_1 is None and metar_phenomena_2 is None and metar_phenomena_3 is None:
+        return present_fog
+
+    if "BR" in metar_phenomena_1 or "BR" in metar_phenomena_2 or "BR" in metar_phenomena_3 or "FG" in metar_phenomena_1 or "FG" in metar_phenomena_2 or "FG" in metar_phenomena_3:
         present_fog = 1
 
     return present_fog
@@ -38,9 +37,9 @@ def present_fog_for_observation(row):
 # average cloud cover
 def average_cloud_nebulosity_for_observation(row):
     cloud_nebulosity_mapping = {'FEW': 1, 'SCT': 2, 'BKN': 3, 'OVC': 4}
-    metar_cloud_nebulosity_1 = row.iloc[25]  # [['cloud_nebulosity_1']]
-    metar_cloud_nebulosity_2 = row.iloc[28]  # [['cloud_nebulosity_2']]
-    metar_cloud_nebulosity_3 = row.iloc[31]  # [['cloud_nebulosity_3']]
+    metar_cloud_nebulosity_1 = row.iloc[25]
+    metar_cloud_nebulosity_2 = row.iloc[28]
+    metar_cloud_nebulosity_3 = row.iloc[31]
     nebulosity_sum = 0
     layers = 0
 
