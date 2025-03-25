@@ -1,7 +1,4 @@
 from DatabaseHandler import DatabaseHandler
-import pandas as pd
-
-from Parser.metar_parser import metar_parser
 
 
 # replace the code for each precipitation type with a unique number via label-encoding
@@ -90,7 +87,7 @@ def get_metar_data_frame():
         'id')  # starting from the first day of 2022 and taking every hour
     metars_df[['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']] = metars_df[
         ['cloud_altitude_1', 'cloud_altitude_2', 'cloud_altitude_3']].fillna(0).astype(int)
-    metars_df['wind_direction'] = metars_df['wind_direction'].fillna(-1).astype(int)  # .fillna(0)
+    metars_df['wind_direction'] = metars_df['wind_direction'].fillna(-1).astype(int)
     metars_df['wind_speed'] = metars_df['wind_speed'].astype(int)
     metars_df['precipitation'] = metars_df.apply(precipitation_for_observation, axis=1)
     metars_df['present_fog'] = metars_df.apply(present_fog_for_observation, axis=1)

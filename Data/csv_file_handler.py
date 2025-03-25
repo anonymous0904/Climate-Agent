@@ -10,6 +10,3 @@ def write_metar_df_to_csv_file():
 
 def read_metar_df_from_csv_file():
     return pd.read_csv('metars.csv')
-
-
-print(read_metar_df_from_csv_file())

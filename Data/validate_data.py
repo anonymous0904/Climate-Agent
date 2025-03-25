@@ -2,7 +2,7 @@ import numpy as np
 import metar_data_frame
 
 
-# calculate the circular mean of a series
+# calculate the circular mean of wind directions
 def circular_mean_wind_direction(direction_angles, w=None):
     if w is None:
         w = np.ones(len(direction_angles))
@@ -19,7 +19,7 @@ def validate_wind_direction(data_frame):
         return data_frame
 
     wind_direction_to_validate = data_frame['wind_direction'].copy()
-    for i in missing_indices:  # [missing_indices].index:
+    for i in missing_indices:
         valid_before = data_frame['wind_direction'].loc[:i][data_frame['wind_direction'].loc[:i] != -1].index.tolist()
         valid_after = data_frame['wind_direction'].loc[i:][data_frame['wind_direction'].loc[i:] != -1].index.tolist()
 
