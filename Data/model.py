@@ -186,19 +186,20 @@ def predict_cloud_presence():
     # y_train, y_test = y_train.astype('float32'), y_test.astype('float32')
 
     cloud_presence_model = build_cloud_presence_model((X_train.shape[1],))
-    cloud_presence_model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
-    cloud_presence_predictions = cloud_presence_model.predict(X)
+    cloud_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
+    cloud_presence_predictions = cloud_presence_model.predict(X_test)
     return cloud_presence_predictions, y_test
 
 
-# cloud_presence_prediction, cloud_presence_test = predict_cloud_presence()
-# print(f"Accuracy: {accuracy_score(cloud_presence_test, cloud_presence_prediction):.4f}")
+cloud_presence_prediction, cloud_presence_test = predict_cloud_presence()
+cloud_presence_prediction_binary = (cloud_presence_prediction >= 0.5).astype(int)
+print(f"Accuracy: {accuracy_score(cloud_presence_test, cloud_presence_prediction_binary):.4f}")
 
 # target_columns = ['wind_direction', 'wind_speed', 'predominant_horizontal_visibility', 'precipitation',
 #                   'present_fog', 'cloud_nebulosity', 'cloud_altitude', 'air_temperature', 'dew_point', 'air_pressure']
 # cnn_predictions, cnn_test = predict_with_cnn(target_columns)
-target_columns = ['air_temperature', 'dew_point', 'air_pressure']
-bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
+# target_columns = ['air_temperature', 'dew_point', 'air_pressure']
+# bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
 # cnn_bilstm_predictions, cnn_bilstm_test = predict_with_cnn_bilstm(target_columns)
 
 
@@ -208,11 +209,11 @@ bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_te
 #     print(f"RMSE: {np.sqrt(mean_squared_error(cnn_test[:, i], cnn_predictions[:, i])):.4f}")
 #     print(f"R² Score: {r2_score(cnn_test[:, i], cnn_predictions[:, i]):.4f}")
 
-for i, col in enumerate(target_columns):
-    print(f"\nBiLSTM Evaluation für {col}:")
-    print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
-    print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
-    print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
+# for i, col in enumerate(target_columns):
+#     print(f"\nBiLSTM Evaluation für {col}:")
+#     print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
+#     print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
+#     print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
 
 # for i, col in enumerate(target_columns):
 #     print(f"\nBiLSTM Evaluation für {col}:")
