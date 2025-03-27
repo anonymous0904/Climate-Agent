@@ -7,8 +7,6 @@ from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropou
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
@@ -97,7 +95,7 @@ def predict_with_bilstm(target_cols):
 
     # calculate predictions for variables using the test data
     bilstm_predictions = bilstm_model.predict(X_test)
-    return bilstm_predictions, y_test
+    return bilstm_predictions.astype(int), y_test.astype(int)
 
 
 def build_cnn_bilstm(input_shape, output_dim):
@@ -148,60 +146,12 @@ def predict_with_cnn_bilstm(target_cols):
     return cnn_bilstm_predictions, y_test
 
 
-# binary classification model for the presence of clouds
-def build_cloud_presence_model(input_shape):
-    model = Sequential([
-        Dense(64, activation='relu', input_shape=input_shape),
-        Dense(32, activation='relu'),
-        Dense(1, activation='sigmoid')  # sigmoid for binary classification
-    ])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model
-
-
-# predict cloud nebulosity and altitude
-def build_cloud_details_model(input_shape, output_dim):
-    model = Sequential([
-        Dense(64, activation='relu', input_shape=input_shape),
-        Dense(32, activation='relu'),
-        Dense(output_dim)  # no activation function for regression
-    ])
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-    return model
-
-
-def predict_cloud_presence():
-    metars_df = csv_file_handler.read_metar_df_from_csv_file()
-    metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(
-        int)  # create a variable to indicate the presence of clouds
-    metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-    target_cloud_presence = ['cloud_presence']
-    target_cloud_features = ['cloud_nebulosity', 'cloud_altitude']
-
-    X, y, scaler = preprocess_data(metars_df, target_cloud_presence)
-    # X = metars_df.drop(columns=[target_cloud_presence] + target_cloud_features)
-    # y = metars_df[target_cloud_presence]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    # X_train, X_test = X_train.astype('float32'), X_test.astype('float32')
-    # y_train, y_test = y_train.astype('float32'), y_test.astype('float32')
-
-    cloud_presence_model = build_cloud_presence_model((X_train.shape[1],))
-    cloud_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
-    cloud_presence_predictions = cloud_presence_model.predict(X_test)
-    return cloud_presence_predictions, y_test
-
-
-cloud_presence_prediction, cloud_presence_test = predict_cloud_presence()
-cloud_presence_prediction_binary = (cloud_presence_prediction >= 0.5).astype(int)
-print(f"Accuracy: {accuracy_score(cloud_presence_test, cloud_presence_prediction_binary):.4f}")
-
 # target_columns = ['wind_direction', 'wind_speed', 'predominant_horizontal_visibility', 'precipitation',
 #                   'present_fog', 'cloud_nebulosity', 'cloud_altitude', 'air_temperature', 'dew_point', 'air_pressure']
 # cnn_predictions, cnn_test = predict_with_cnn(target_columns)
-# target_columns = ['air_temperature', 'dew_point', 'air_pressure']
-# bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
+target_columns = ['air_temperature', 'dew_point', 'air_pressure']
+bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
 # cnn_bilstm_predictions, cnn_bilstm_test = predict_with_cnn_bilstm(target_columns)
-
 
 # for i, col in enumerate(target_columns):
 #     print(f"\n1D-CNN Evaluation für {col}:")
