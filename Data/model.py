@@ -12,7 +12,8 @@ from xgboost import XGBClassifier
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
-    df = df.drop(columns=['observation_time'])
+    # df = df.drop(columns=['observation_time'])
+    df = df[target_cols]
     scaler = MinMaxScaler()
     df_scaled = scaler.fit_transform(df)
 
