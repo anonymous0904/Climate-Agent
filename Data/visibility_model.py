@@ -1,11 +1,20 @@
+import random
+
 import numpy as np
 import pandas as pd
+
 import csv_file_handler
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from keras.src.models import Sequential
 from keras.src.layers import Dense, Bidirectional, LSTM, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
+import tensorflow as tf
+
+seed_value = 42
+random.seed(seed_value)
+np.random.seed(seed_value)
+tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
