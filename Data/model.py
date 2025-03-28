@@ -95,7 +95,7 @@ def predict_with_bilstm(target_cols):
 
     # calculate predictions for variables using the test data
     bilstm_predictions = bilstm_model.predict(X_test)
-    return bilstm_predictions.astype(int), y_test.astype(int)
+    return scaler.inverse_transform(bilstm_predictions).astype(int), scaler.inverse_transform(y_test).astype(int)
 
 
 def build_cnn_bilstm(input_shape, output_dim):
