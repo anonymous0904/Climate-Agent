@@ -5,7 +5,6 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential, Model
 from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, Bidirectional, Reshape
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
 
 
@@ -45,7 +44,8 @@ def build_cnn_model(input_shape, output_dim):
 # output_dim = number of predicted features
 def build_bilstm_model(input_shape, output_dim):
     model = Sequential()
-    model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=input_shape))
+    model.add(Input(shape=input_shape))
+    model.add(Bidirectional(LSTM(64, return_sequences=True)))
     model.add(Dropout(0.2))
     model.add(Bidirectional(LSTM(32)))
     model.add(Dense(64, activation='relu'))
@@ -145,28 +145,21 @@ def predict_with_cnn_bilstm(target_cols):
     cnn_bilstm_predictions = cnn_bilstm_model.predict(X_test)
     return cnn_bilstm_predictions, y_test
 
-
 # target_columns = ['wind_direction', 'wind_speed', 'predominant_horizontal_visibility', 'precipitation',
 #                   'present_fog', 'cloud_nebulosity', 'cloud_altitude', 'air_temperature', 'dew_point', 'air_pressure']
 # cnn_predictions, cnn_test = predict_with_cnn(target_columns)
-target_columns = ['air_temperature', 'dew_point', 'air_pressure']
-bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
+# target_columns = ['air_pressure']
+# bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
 # cnn_bilstm_predictions, cnn_bilstm_test = predict_with_cnn_bilstm(target_columns)
-
-# for i, col in enumerate(target_columns):
-#     print(f"\n1D-CNN Evaluation für {col}:")
-#     print(f"MAE: {mean_absolute_error(cnn_test[:, i], cnn_predictions[:, i]):.4f}")
-#     print(f"RMSE: {np.sqrt(mean_squared_error(cnn_test[:, i], cnn_predictions[:, i])):.4f}")
-#     print(f"R² Score: {r2_score(cnn_test[:, i], cnn_predictions[:, i]):.4f}")
-
+#
 # for i, col in enumerate(target_columns):
 #     print(f"\nBiLSTM Evaluation für {col}:")
 #     print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
 #     print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
 #     print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
-
-# for i, col in enumerate(target_columns):
-#     print(f"\nBiLSTM Evaluation für {col}:")
-#     print(f"MAE: {mean_absolute_error(cnn_bilstm_test[:, i], cnn_bilstm_predictions[:, i]):.4f}")
-#     print(f"RMSE: {np.sqrt(mean_squared_error(cnn_bilstm_test[:, i], cnn_bilstm_predictions[:, i])):.4f}")
-#     print(f"R² Score: {r2_score(cnn_bilstm_test[:, i], cnn_bilstm_predictions[:, i]):.4f}")
+#
+# train_result = pd.DataFrame(
+#     data={'Train Prediction': bilstm_predictions.flatten(),
+#           'Actual Value': bilstm_test.flatten()})
+# with open('predictions/air_pressure_predictions.txt', 'w') as f:
+#     f.write(train_result.to_string())
