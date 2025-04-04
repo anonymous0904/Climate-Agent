@@ -10,7 +10,8 @@ from Data import csv_file_handler
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
 
-X = metars_df[['predominant_horizontal_visibility', 'air_temperature', 'present_fog', 'air_pressure']]
+X = metars_df[['predominant_horizontal_visibility', 'air_temperature', 'present_fog', 'air_pressure', 'dew_point',
+               'precipitation']]
 y = metars_df[['predominant_horizontal_visibility']]
 
 scaler = StandardScaler()
@@ -50,7 +51,7 @@ print(f"R² Score: {r2_score(y_test, y_pred):.4f}")
 print(f"MAE: {mae:.2f}")
 print(f"RMSE: {rmse:.2f}")
 
-y_pred = np.array(y_pred).flatten()
+y_pred = np.array(y_pred.astype(int)).flatten()
 y_test = np.array(y_test).flatten()
 
 # train_result = pd.DataFrame(
