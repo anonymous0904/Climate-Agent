@@ -38,10 +38,10 @@ for i in range(len(y_pred)):
     elif 800 < y_pred[i] < 5000:
         vis = y_pred[i]
         y_pred[i] = (vis // 100) * 100
-    elif 5000 < y_pred[i] < 9999:
+    elif 5000 < y_pred[i] < 9950:
         vis = y_pred[i]
         y_pred[i] = (vis // 1000) * 1000
-    elif 9999 < y_pred[i]:
+    elif 9950 <= y_pred[i]:
         y_pred[i] = 9999
 
 mae = mean_absolute_error(y_test, y_pred)
