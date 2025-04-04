@@ -4,9 +4,6 @@ import numpy as np
 import pandas as pd
 from keras import Input
 from keras.src.callbacks import EarlyStopping
-from keras.src.losses import Huber
-
-from keras.src.optimizers import Adam
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
@@ -22,7 +19,6 @@ tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
-    # df = df[target_cols]
     scaler = MinMaxScaler()
     df_scaled = scaler.fit_transform(df)
 
