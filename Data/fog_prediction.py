@@ -1,37 +1,34 @@
+import random
+
 import numpy as np
 import pandas as pd
 from keras import Input
 
 import csv_file_handler
-from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
 from keras.src.layers import Dense, Bidirectional, LSTM, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import tensorflow as tf
+
+seed_value = 42
+random.seed(seed_value)
+np.random.seed(seed_value)
+tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
     df = df[target_cols]
-    scaler = MinMaxScaler()
-    df_scaled = scaler.fit_transform(df)
+    df_scaled = df[target_cols]
 
     X, y = [], []
     for i in range(len(df_scaled) - sequence_length):
-        X.append(df_scaled[i:i + sequence_length])
-        y.append(df_scaled[i + sequence_length, [df.columns.get_loc(col) for col in target_cols]])
-
-    return np.array(X), np.array(y), scaler
+        X.append(df_scaled.iloc[i:i + sequence_length].values)
+        y.append(df_scaled.iloc[i + sequence_length].values)
+    return np.array(X), np.array(y)  # , scaler
 
 
 # binary classification model for the presence of fog
-# def build_fog_presence_model(input_shape):
-#     model = Sequential([
-#         Dense(64, activation='relu', input_shape=input_shape),
-#         Dense(32, activation='relu'),
-#         Dense(1, activation='sigmoid')  # sigmoid for binary classification
-#     ])
-#     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-#     return model
 def build_fog_presence_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
@@ -49,7 +46,7 @@ def predict_fog_presence():
     metars_df = csv_file_handler.read_metar_df_from_csv_file()
     metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
 
-    X, y, scaler = preprocess_data(metars_df, ['present_fog'])
+    X, y = preprocess_data(metars_df, ['present_fog'])
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     fog_presence_model = build_fog_presence_model((X_train.shape[1], X_train.shape[2]))
