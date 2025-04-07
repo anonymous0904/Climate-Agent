@@ -10,7 +10,6 @@ from Data import csv_file_handler
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
-    # df = df.drop(columns=['observation_time'])
     df = df[target_cols]
     scaler = MinMaxScaler()
     df_scaled = scaler.fit_transform(df)
@@ -18,9 +17,9 @@ def preprocess_data(df, target_cols, sequence_length=10):
     X, y = [], []
     for i in range(len(df_scaled) - sequence_length):
         X.append(df_scaled[i:i + sequence_length])
-        y.append(df_scaled[i + sequence_length, [df.columns.get_loc(col) for col in target_cols]])
+        y.append(df.iloc[i + sequence_length][target_cols[0]])
 
-    return np.array(X), np.array(y), scaler
+    return np.array(X), np.array(y).astype(int), scaler
 
 
 def build_cloud_nebulosity_model(input_shape):
@@ -40,10 +39,20 @@ metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(
     int)  # create a variable to indicate the presence of clouds
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
 X, y, scaler = preprocess_data(metars_df, ['cloud_nebulosity'])
-y = y[:, 0].astype(int)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 cloud_nebulosity_model = build_cloud_nebulosity_model((X_train.shape[1], X_train.shape[2]))
 cloud_nebulosity_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
 cloud_nebulosity_predictions = cloud_nebulosity_model.predict(X_test)
 cloud_nebulosity_predictions = np.argmax(cloud_nebulosity_predictions, axis=1)
-print(f"Accuracy: {accuracy_score(cloud_nebulosity_predictions, y_test):.4f}")
+
+shifted_predictions = pd.Series(cloud_nebulosity_predictions).shift(-1)
+shifted_predictions.iloc[-1] = 0
+shifted_predictions = shifted_predictions.astype(int)
+print(f"Accuracy: {accuracy_score(shifted_predictions, y_test):.4f}")
+
+# train_result = pd.DataFrame(
+#     data={'Train Prediction': shifted_predictions,
+#           'Actual Value': y_test.flatten()})
+# with open('predictions/cloud_nebulosity_predictions.txt', 'w') as f:
+#     f.write(train_result.to_string())
