@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 from keras import Sequential, Input
@@ -7,6 +9,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 from Data import csv_file_handler
+import tensorflow as tf
+
+seed_value = 42
+random.seed(seed_value)
+np.random.seed(seed_value)
+tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
@@ -51,8 +59,8 @@ shifted_predictions.iloc[-1] = 0
 shifted_predictions = shifted_predictions.astype(int)
 print(f"Accuracy: {accuracy_score(shifted_predictions, y_test):.4f}")
 
-# train_result = pd.DataFrame(
-#     data={'Train Prediction': shifted_predictions,
-#           'Actual Value': y_test.flatten()})
-# with open('predictions/cloud_nebulosity_predictions.txt', 'w') as f:
-#     f.write(train_result.to_string())
+train_result = pd.DataFrame(
+    data={'Train Prediction': shifted_predictions,
+          'Actual Value': y_test.flatten()})
+with open('predictions/cloud_nebulosity_predictions.txt', 'w') as f:
+    f.write(train_result.to_string())
