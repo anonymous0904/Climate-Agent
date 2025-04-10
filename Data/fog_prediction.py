@@ -25,7 +25,7 @@ def preprocess_data(df, target_cols, sequence_length=10):
     for i in range(len(df_scaled) - sequence_length):
         X.append(df_scaled.iloc[i:i + sequence_length].values)
         y.append(df_scaled.iloc[i + sequence_length].values)
-    return np.array(X), np.array(y)  # , scaler
+    return np.array(X), np.array(y)
 
 
 # binary classification model for the presence of fog
