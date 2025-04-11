@@ -97,6 +97,7 @@ precipitation_predictions = precipitation_predictions.astype(int)
 y_test = y_test.astype(int)
 
 print(f"Accuracy: {accuracy_score(precipitation_predictions, y_test):.4f}")
+# TODO - CHECK FOR PREDICTED PRECIPITATIONS WITHOUT CLOUDS
 
 # train_result = pd.DataFrame(
 #     data={'Train Prediction': precipitation_predictions.flatten(),
