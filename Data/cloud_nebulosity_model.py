@@ -31,16 +31,16 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 
 
 # BiLSTM - Accuracy: 0.9876
-# def build_cloud_nebulosity_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(5, activation='softmax'))  # 5 classes (0, 1, 2, 3, 4)
-#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-#     return model
+def build_cloud_nebulosity_model(input_shape):
+    model = Sequential()
+    model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
+    model.add(Bidirectional(LSTM(64, return_sequences=True)))
+    model.add(Dropout(0.2))
+    model.add(Bidirectional(LSTM(32)))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(5, activation='softmax'))
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    return model
 
 
 # CNN + BiLSTM - Accuracy: 0.9469
@@ -54,22 +54,22 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 #     model.add(Dropout(0.2))
 #     model.add(Bidirectional(LSTM(32)))
 #     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(5, activation='softmax'))  # 5 classes (0, 1, 2, 3, 4)
+#     model.add(Dense(5, activation='softmax'))
 #     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 #     return model
 
 # CNN - Accuracy: 0.8867
-def build_cloud_nebulosity_model(input_shape):
-    model = Sequential()
-    model.add(Input(shape=input_shape))
-    model.add(Conv1D(64, kernel_size=3, activation='relu'))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(Dropout(0.3))
-    model.add(Flatten())
-    model.add(Dense(64, activation='relu'))
-    model.add(Dense(5, activation='softmax'))
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    return model
+# def build_cloud_nebulosity_model(input_shape):
+#     model = Sequential()
+#     model.add(Input(shape=input_shape))
+#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
+#     model.add(MaxPooling1D(pool_size=2))
+#     model.add(Dropout(0.3))
+#     model.add(Flatten())
+#     model.add(Dense(64, activation='relu'))
+#     model.add(Dense(5, activation='softmax'))
+#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+#     return model
 
 
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
