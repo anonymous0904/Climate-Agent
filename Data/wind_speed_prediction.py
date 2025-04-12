@@ -31,7 +31,7 @@ def preprocess_data(df, input_features, target_feature, sequence_length=24):
     return np.array(X), np.array(y), scaler
 
 
-# R² Score: 0.5207
+# R² Score: 0.5232
 def build_wind_speed_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -86,7 +86,7 @@ metars_df['hour'] = metars_df.index.hour
 metars_df['month'] = metars_df.index.month
 metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
-input_cols = ['wind_speed', 'predominant_horizontal_visibility', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature',
+input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature',
               'dew_point',
               'air_pressure', 'hour',
               'month']
@@ -116,8 +116,8 @@ y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].astyp
 
 print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}")
 
-train_result = pd.DataFrame(
-    data={'Train Prediction': bilstm_predictions_unscaled.flatten(),
-          'Actual Value': y_test_unscaled.flatten()})
-with open('predictions/wind_speed_predictions.txt', 'w') as f:
-    f.write(train_result.to_string())
+# train_result = pd.DataFrame(
+#     data={'Train Prediction': bilstm_predictions_unscaled.flatten(),
+#           'Actual Value': y_test_unscaled.flatten()})
+# with open('predictions/wind_speed_predictions.txt', 'w') as f:
+#     f.write(train_result.to_string())
