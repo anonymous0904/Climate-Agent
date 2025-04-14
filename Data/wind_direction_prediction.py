@@ -54,24 +54,49 @@ def preprocess_data(df, input_features, sequence_length=24):
     return np.array(X), np.array(y), scaler
 
 
+# BiLSTM - Mean Angular Error: 13.97°
+# def build_wind_direction_model(input_shape):
+#     model = Sequential()
+#     model.add(Input(shape=input_shape))
+#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
+#     model.add(Dropout(0.2))
+#     model.add(Bidirectional(LSTM(64)))
+#     model.add(Dense(128, activation='relu'))
+#     model.add(Dense(64, activation='relu'))
+#     model.add(Dense(2))
+#
+#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+#     return model
+
+# CNN - Mean Angular Error: 14.23°
+# def build_wind_direction_model(input_shape):
+#     model = Sequential()
+#     model.add(Input(shape=input_shape))
+#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
+#     model.add(MaxPooling1D(pool_size=2))
+#     model.add(Dropout(0.3))
+#     model.add(Flatten())
+#     model.add(Dense(128, activation='relu'))
+#     model.add(Dense(64, activation='relu'))
+#     model.add(Dense(2))
+#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+#     return model
+
+# CNN + BiLSTM - Mean Angular Error: 13.83°
 def build_wind_direction_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
+    model.add(Conv1D(filters=64, kernel_size=3, activation='relu', padding='same'))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Dropout(0.3))
     model.add(Bidirectional(LSTM(64, return_sequences=True)))
     model.add(Dropout(0.2))
     model.add(Bidirectional(LSTM(64)))
     model.add(Dense(128, activation='relu'))
     model.add(Dense(64, activation='relu'))
     model.add(Dense(2))
-
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     return model
-
-
-def pad_predictions_for_inverse_transform(preds, total_features, target_index):
-    padded = np.zeros((len(preds), total_features))
-    padded[:, target_index] = preds.flatten()
-    return padded
 
 
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
@@ -82,8 +107,8 @@ metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
 input_cols = ['air_temperature', 'dew_point', 'air_pressure', 'hour', 'month', 'wind_dir_sin', 'wind_dir_cos']
 target_cols = ['wind_dir_sin', 'wind_dir_cos']
-X, y, scaler = preprocess_data(metars_df, input_cols, target_cols)
 
+X, y, scaler = preprocess_data(metars_df, input_cols)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
@@ -92,7 +117,6 @@ y_test = y_test.astype('float32')
 
 model = build_wind_direction_model(X_train.shape[1:])
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-
 model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32, callbacks=[early_stopping])
 
 predictions = model.predict(X_test)
