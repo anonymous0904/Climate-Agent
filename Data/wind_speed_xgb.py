@@ -12,6 +12,8 @@ features = ['wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point', 'air
 target = 'wind_speed'
 
 df = csv_file_handler.read_metar_df_from_csv_file()
+df['wind_speed'] = df['wind_speed'].rolling(window=4, center=True).mean().bfill().ffill()
+
 df['hour'] = pd.to_datetime(df['observation_time']).dt.hour
 df['month'] = pd.to_datetime(df['observation_time']).dt.month
 df['wind_dir_sin'] = np.sin(np.deg2rad(df['wind_direction']))
@@ -37,10 +39,10 @@ for i in range(len(y_pred)):
         else:
             y_pred[i] = int(whole)
 
-print(f"R² Score: {r2_score(y_test, y_pred.astype(int)):.4f}")
+print(f"R² Score: {r2_score(y_test, y_pred):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Train Prediction': y_pred.astype(int),
-#           'Actual Value': y_test})
+#           'Actual Value': y_test.astype(int)})
 # with open('predictions/wind_speed_xgb.txt', 'w') as f:
 #     f.write(train_result.to_string())
