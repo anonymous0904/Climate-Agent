@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import pandas as pd
+# from matplotlib import pyplot as plt
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
@@ -31,13 +32,14 @@ def preprocess_data(df, input_features, target_feature, sequence_length=24):
     return np.array(X), np.array(y), scaler
 
 
-# R² Score: 0.5232
+# BiLSTM MODEL - R² Score: 0.9270
 def build_wind_speed_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
     model.add(Bidirectional(LSTM(64, return_sequences=True)))
     model.add(Dropout(0.2))
-    model.add(Bidirectional(LSTM(32)))
+    model.add(Bidirectional(LSTM(64)))
+    model.add(Dense(128, activation='relu'))
     model.add(Dense(64, activation='relu'))
     model.add(Dense(1))
 
@@ -45,7 +47,7 @@ def build_wind_speed_model(input_shape):
     return model
 
 
-# R² Score: 0.5076
+# 1D-CNN + BiLSTM MODEL - R² Score: 0.9111
 # def build_wind_speed_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -61,6 +63,7 @@ def build_wind_speed_model(input_shape):
 #     return model
 
 
+# 1D-CNN MODEL - R² Score: 0.8729
 # def build_wind_speed_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -72,7 +75,7 @@ def build_wind_speed_model(input_shape):
 #     model.add(Dense(1))
 #     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 #     return model
-
+#
 
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
     padded = np.zeros((len(preds), total_features))
@@ -82,13 +85,12 @@ def pad_predictions_for_inverse_transform(preds, total_features, target_index):
 
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
+metars_df['wind_speed'] = metars_df['wind_speed'].rolling(window=3, center=True).mean().bfill().ffill()
 metars_df['hour'] = metars_df.index.hour
 metars_df['month'] = metars_df.index.month
 metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
-input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature',
-              'dew_point',
-              'air_pressure', 'hour',
+input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point', 'air_pressure', 'hour',
               'month']
 target_col = 'wind_speed'
 X, y, scaler = preprocess_data(metars_df, input_cols, target_col)
@@ -111,9 +113,6 @@ padded_y_test = pad_predictions_for_inverse_transform(y_test, len(input_cols), t
 
 bilstm_predictions_unscaled = scaler.inverse_transform(padded_preds)[:, target_index].astype(int)
 y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].astype(int)
-# bilstm_predictions = scaler.inverse_transform(bilstm_predictions).astype(int)
-# y_test = scaler.inverse_transform(y_test).astype(int)
-
 print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}")
 
 # train_result = pd.DataFrame(
@@ -121,3 +120,9 @@ print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}"
 #           'Actual Value': y_test_unscaled.flatten()})
 # with open('predictions/wind_speed_predictions.txt', 'w') as f:
 #     f.write(train_result.to_string())
+
+# plt.plot(metars_df['wind_speed'], label='Raw Wind Speed')
+# plt.plot(metars_df['wind_speed'].rolling(3).mean(), label='Smoothed', linewidth=2)
+# plt.legend()
+# plt.title("Zgomot vs Smoothing")
+# plt.show()
