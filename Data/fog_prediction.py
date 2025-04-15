@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 from keras import Input
+from keras.src.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 
 import csv_file_handler
@@ -25,12 +26,14 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     for i in range(len(df) - sequence_length):
         X.append(df.iloc[i:i + sequence_length][input_features].values)
         y.append(df.iloc[i + sequence_length][target_feature])
-    return np.array(X), np.array(y)
+
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), observation_times
 
 
 # BINARY CLASSIFICATION MODELS FOR THE PRESENCE OF FOG
 
-# BiLSTM - MODEL - ACCURACY: 0.9687
+# BiLSTM - MODEL - ACCURACY: 0.9897; Train accuracy: 0.9631
 # def build_fog_presence_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
@@ -43,7 +46,7 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 #     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 #     return model
 
-# 1D-CNN - MODEL  - ACCURACY: 0.9683
+# 1D-CNN - MODEL  - ACCURACY: 0.9897; Train accuracy: 0.9619
 # def build_fog_presence_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -56,7 +59,8 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 #     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 #     return model
 
-# HYBRID 1D-CNN + BiLSTM - MODEL - ACCURACY: 0.9687
+
+# HYBRID 1D-CNN + BiLSTM - MODEL - ACCURACY: 0.9897; Train accuracy: 0.9631
 def build_fog_presence_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -81,22 +85,31 @@ def predict_fog_presence():
     scaler = MinMaxScaler()
     metars_df[input_features] = scaler.fit_transform(metars_df[input_features])
 
-    X, y = preprocess_data(metars_df, input_features, target_feature)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X, y, observation_times = preprocess_data(metars_df, input_features, target_feature)
+    split_index = int(len(X) * 0.8)
+
+    X_train = X[:split_index]
+    X_test = X[split_index:]
+    y_train = y[:split_index]
+    y_test = y[split_index:]
+    time_train = observation_times[:split_index]
+    time_test = observation_times[split_index:]
 
     fog_presence_model = build_fog_presence_model((X_train.shape[1], X_train.shape[2]))
-    fog_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
+    early_stopping = EarlyStopping(monitor='val_accuracy', patience=5, mode='max', restore_best_weights=True, verbose=1)
+    fog_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32,
+                           callbacks=[early_stopping])
     fog_presence_predictions = fog_presence_model.predict(X_test)
-    return fog_presence_predictions, y_test
+    return fog_presence_predictions, y_test, time_test
 
 
-fog_presence_prediction, fog_presence_test = predict_fog_presence()
+fog_presence_prediction, fog_presence_test, time_test = predict_fog_presence()
 fog_presence_prediction_binary = (fog_presence_prediction > 0.5).astype(int)
 fog_presence_test = fog_presence_test.astype(int)
 print(f"Accuracy: {accuracy_score(fog_presence_test, fog_presence_prediction_binary):.4f}")
 
-train_result = pd.DataFrame(
-    data={'Train Prediction': fog_presence_prediction_binary.flatten(),
-          'Actual Value': fog_presence_test.flatten()})
-with open('predictions/fog_predictions.txt', 'w') as f:
-    f.write(train_result.to_string())
+# train_result = pd.DataFrame(
+#     data={'Time': time_test,
+#           'Train Prediction': fog_presence_prediction_binary.flatten(),
+#           'Actual Value': fog_presence_test.flatten()})
+# train_result.to_csv('predictions/fog_predictions.csv', index=False, columns=train_result.columns)
