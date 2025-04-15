@@ -2,13 +2,14 @@ import random
 
 import numpy as np
 import pandas as pd
+from keras.src.callbacks import EarlyStopping
+
 # from matplotlib import pyplot as plt
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential, Model
 from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, Bidirectional, Reshape
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import tensorflow as tf
 
@@ -29,10 +30,11 @@ def preprocess_data(df, input_features, target_feature, sequence_length=24):
         X.append(df_scaled[i:i + sequence_length, :-1])
         y.append(df_scaled[i + sequence_length, target_index])
 
-    return np.array(X), np.array(y), scaler
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM MODEL - R² Score: 0.9270
+# BiLSTM MODEL - R² Score: 0.9048
 def build_wind_speed_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -47,7 +49,7 @@ def build_wind_speed_model(input_shape):
     return model
 
 
-# 1D-CNN + BiLSTM MODEL - R² Score: 0.9111
+# 1D-CNN + BiLSTM MODEL - R² Score: TODO
 # def build_wind_speed_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -93,17 +95,27 @@ metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
 input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point', 'air_pressure', 'hour',
               'month']
 target_col = 'wind_speed'
-X, y, scaler = preprocess_data(metars_df, input_cols, target_col)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_cols, target_col)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+split_index = int(len(X) * 0.8)
+
+X_train = X[:split_index]
+X_test = X[split_index:]
+y_train = y[:split_index]
+y_test = y[split_index:]
+time_train = observation_times[:split_index]
+time_test = observation_times[split_index:]
+
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 y_train = y_train.astype('float32')
 y_test = y_test.astype('float32')
 
 bilstm_model = build_wind_speed_model(X_train.shape[1:])
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
-bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32)
+bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32,
+                 callbacks=[early_stopping])
 
 bilstm_predictions = bilstm_model.predict(X_test)
 
@@ -116,10 +128,11 @@ y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].astyp
 print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}")
 
 # train_result = pd.DataFrame(
-#     data={'Train Prediction': bilstm_predictions_unscaled.flatten(),
+#     data={'Time': time_test,
+#           'Train Prediction': bilstm_predictions_unscaled.flatten(),
 #           'Actual Value': y_test_unscaled.flatten()})
-# with open('predictions/wind_speed_predictions.txt', 'w') as f:
-#     f.write(train_result.to_string())
+#
+# train_result.to_csv('predictions/wind_speed_predictions.csv', index=False, columns=train_result.columns)
 
 # plt.plot(metars_df['wind_speed'], label='Raw Wind Speed')
 # plt.plot(metars_df['wind_speed'].rolling(3).mean(), label='Smoothed', linewidth=2)
