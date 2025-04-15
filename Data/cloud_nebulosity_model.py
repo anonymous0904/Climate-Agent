@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 from keras import Sequential, Input
+from keras.src.callbacks import EarlyStopping
 from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D, Flatten
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -27,10 +28,11 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
         X.append(df_scaled[i:i + sequence_length])
         y.append(df.iloc[i + sequence_length][target_feature])
 
-    return np.array(X), np.array(y).astype(int), scaler
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y).astype(int), scaler, observation_times
 
 
-# BiLSTM - Accuracy: 0.9876
+# BiLSTM - Accuracy: 0.9818
 def build_cloud_nebulosity_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
@@ -78,15 +80,25 @@ metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d
 input_features = ['cloud_nebulosity', 'cloud_presence']
 target_feature = 'cloud_nebulosity'
 
-X, y, scaler = preprocess_data(metars_df, input_features, target_feature)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
+split_index = int(len(X) * 0.8)
+X_train = X[:split_index]
+X_test = X[split_index:]
+y_train = y[:split_index]
+y_test = y[split_index:]
+time_train = observation_times[:split_index]
+time_test = observation_times[split_index:]
+
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 y_train = y_train.astype('float32')
 y_test = y_test.astype('float32')
 
 cloud_nebulosity_model = build_cloud_nebulosity_model((X_train.shape[1], X_train.shape[2]))
-cloud_nebulosity_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
+early_stopping = EarlyStopping(monitor='val_accuracy', patience=5, mode='max', restore_best_weights=True, verbose=1)
+
+cloud_nebulosity_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32,
+                           callbacks=[early_stopping])
 cloud_nebulosity_predictions = cloud_nebulosity_model.predict(X_test)
 cloud_nebulosity_predictions = np.argmax(cloud_nebulosity_predictions, axis=1)
 cloud_nebulosity_predictions = pd.Series(cloud_nebulosity_predictions).shift(-1)
@@ -96,7 +108,7 @@ y_test = y_test.astype(int)
 print(f"Accuracy: {accuracy_score(cloud_nebulosity_predictions, y_test):.4f}")
 
 # train_result = pd.DataFrame(
-#     data={'Train Prediction': cloud_nebulosity_predictions,
+#     data={'Time': time_test,
+#           'Train Prediction': cloud_nebulosity_predictions,
 #           'Actual Value': y_test.flatten()})
-# with open('predictions/cloud_nebulosity_predictions.txt', 'w') as f:
-#     f.write(train_result.to_string())
+# train_result.to_csv('predictions/cloud_nebulosity_predictions.csv', index=False, columns=train_result.columns)
