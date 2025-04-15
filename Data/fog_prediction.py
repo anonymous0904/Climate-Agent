@@ -9,7 +9,6 @@ from sklearn.preprocessing import MinMaxScaler
 import csv_file_handler
 from keras.src.models import Sequential
 from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D, Flatten
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import tensorflow as tf
 

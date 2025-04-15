@@ -5,7 +5,6 @@ import pandas as pd
 from keras import Sequential, Input
 from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D, Flatten
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.callbacks import EarlyStopping
 
@@ -28,19 +27,20 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
         X.append(df_scaled[i:i + sequence_length])
         y.append(df.iloc[i + sequence_length][target_feature])
 
-    return np.array(X), np.array(y).astype(int), scaler
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y).astype(int), scaler, observation_times
 
 
 # BiLSTM - MODEL - ACCURACY: 0.9516
-def build_precipitation_model(input_shape):
-    model = Sequential()
-    model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
-    model.add(Bidirectional(LSTM(64, return_sequences=True)))
-    model.add(Bidirectional(LSTM(32)))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dense(3, activation='softmax'))  # 3 classes (0, 1, 2)
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    return model
+# def build_precipitation_model(input_shape):
+#     model = Sequential()
+#     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
+#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
+#     model.add(Bidirectional(LSTM(32)))
+#     model.add(Dense(64, activation='relu'))
+#     model.add(Dense(3, activation='softmax'))  # 3 classes (0, 1, 2)
+#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+#     return model
 
 
 # CNN - Accuracy: 0.9518
@@ -57,20 +57,20 @@ def build_precipitation_model(input_shape):
 #     return model
 
 
-# CNN + BiLSTM - Accuracy: 0.9527
-# def build_precipitation_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(filters=64, kernel_size=3, activation='relu', padding='same'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Dropout(0.3))
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(3, activation='softmax'))
-#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-#     return model
+# CNN + BiLSTM - Accuracy: 0.9522
+def build_precipitation_model(input_shape):
+    model = Sequential()
+    model.add(Input(shape=input_shape))
+    model.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Dropout(0.3))
+    model.add(Bidirectional(LSTM(64, return_sequences=True)))
+    model.add(Dropout(0.2))
+    model.add(Bidirectional(LSTM(32)))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(3, activation='softmax'))
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    return model
 
 
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
@@ -79,8 +79,15 @@ metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d
 input_features = ['precipitation', 'cloud_presence', 'air_pressure', 'dew_point', 'air_temperature']
 target_feature = 'precipitation'
 
-X, y, scaler = preprocess_data(metars_df, input_features, target_feature)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
+split_index = int(len(X) * 0.8)
+X_train = X[:split_index]
+X_test = X[split_index:]
+y_train = y[:split_index]
+y_test = y[split_index:]
+time_train = observation_times[:split_index]
+time_test = observation_times[split_index:]
+
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 y_train = y_train.astype('float32')
@@ -100,7 +107,8 @@ print(f"Accuracy: {accuracy_score(precipitation_predictions, y_test):.4f}")
 # TODO - CHECK FOR PREDICTED PRECIPITATIONS WITHOUT CLOUDS
 
 # train_result = pd.DataFrame(
-#     data={'Train Prediction': precipitation_predictions.flatten(),
+#     data={'Time': time_test,
+#           'Train Prediction': precipitation_predictions.flatten(),
 #           'Actual Value': y_test.flatten()})
-# with open('predictions/precipitation_predictions.txt', 'w') as f:
-#     f.write(train_result.to_string())
+#
+# train_result.to_csv('predictions/precipitation_predictions.csv', index=False, columns=train_result.columns)
