@@ -1,11 +1,18 @@
+import random
+
 import numpy as np
 import pandas as pd
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
-from keras.src.models import Sequential, Model
-from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, Bidirectional, Reshape
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
+from keras.src.models import Sequential
+from keras.src.layers import Input, Dense, Dropout, LSTM, Bidirectional
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import tensorflow as tf
+
+seed_value = 42
+random.seed(seed_value)
+np.random.seed(seed_value)
+tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, target_cols, sequence_length=10):
@@ -18,25 +25,8 @@ def preprocess_data(df, target_cols, sequence_length=10):
         X.append(df_scaled[i:i + sequence_length])
         y.append(df_scaled[i + sequence_length, [df.columns.get_loc(col) for col in target_cols]])
 
-    return np.array(X), np.array(y), scaler
-
-
-# input_shape = (sequence length, number of features)
-# output_dim = number of predicted features
-def build_cnn_model(input_shape, output_dim):
-    model = Sequential([
-        Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=input_shape),
-        MaxPooling1D(pool_size=2),
-        Dropout(0.2),
-        Conv1D(filters=128, kernel_size=3, activation='relu'),
-        MaxPooling1D(pool_size=2),
-        Dropout(0.2),
-        Flatten(),
-        Dense(64, activation='relu'),
-        Dense(output_dim)
-    ])
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-    return model
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), scaler, observation_times
 
 
 # input_shape = (sequence length, number of features)
@@ -54,29 +44,22 @@ def build_bilstm_model(input_shape, output_dim):
     return model
 
 
-def predict_with_cnn(target_cols):
-    metars_df = csv_file_handler.read_metar_df_from_csv_file()
-    metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-    X, y, scaler = preprocess_data(metars_df, target_cols)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-    y_train = y_train.astype('float32')
-    y_test = y_test.astype('float32')
-
-    cnn_model = build_cnn_model(X_train.shape[1:], len(target_cols))
-    cnn_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
-    cnn_predictions = cnn_model.predict(X_test)
-    return cnn_predictions, y_test
-
-
 # air_temperature, air_pressure, dew_point
 def predict_with_bilstm(target_cols):
     metars_df = csv_file_handler.read_metar_df_from_csv_file()
     metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-    X, y, scaler = preprocess_data(metars_df, target_cols)
+    metars_df = metars_df.sort_index()
+    X, y, scaler, observation_times = preprocess_data(metars_df, target_cols)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    split_index = int(len(X) * 0.8)
+
+    X_train = X[:split_index]
+    X_test = X[split_index:]
+    y_train = y[:split_index]
+    y_test = y[split_index:]
+    time_train = observation_times[:split_index]
+    time_test = observation_times[split_index:]
+
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
     y_train = y_train.astype('float32')
@@ -87,68 +70,38 @@ def predict_with_bilstm(target_cols):
     bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
 
     bilstm_predictions = bilstm_model.predict(X_test)
-    return scaler.inverse_transform(bilstm_predictions).astype(int), scaler.inverse_transform(y_test).astype(int)
+    return scaler.inverse_transform(bilstm_predictions).astype(int), scaler.inverse_transform(y_test).astype(
+        int), time_test
 
 
-def build_cnn_bilstm(input_shape, output_dim):
-    inputs = Input(shape=input_shape)
+target_columns = ['dew_point']
+bilstm_predictions, bilstm_test, time_test = predict_with_bilstm(
+    target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
 
-    x = Conv1D(filters=64, kernel_size=3, activation='relu')(inputs)
-    x = MaxPooling1D(pool_size=2)(x)
-    x = Dropout(0.2)(x)
+for i, col in enumerate(target_columns):
+    print(f"\nBiLSTM Evaluation for {col}:")
+    print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
+    print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
+    print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
 
-    x = Conv1D(filters=128, kernel_size=3, activation='relu')(x)
-    x = MaxPooling1D(pool_size=2)(x)
-    x = Dropout(0.2)(x)
-
-    x = Flatten()(x)
-
-    x = Reshape((1, x.shape[1]))(x)
-    x = Bidirectional(LSTM(64, return_sequences=False))(x)
-
-    outputs = Dense(output_dim)(x)
-
-    model = Model(inputs, outputs)
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-
-    return model
-
-
-def predict_with_cnn_bilstm(target_cols):
-    metars_df = csv_file_handler.read_metar_df_from_csv_file()
-    metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-    X, y, scaler = preprocess_data(metars_df, target_cols)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-    y_train = y_train.astype('float32')
-    y_test = y_test.astype('float32')
-
-    input_shape = (X_train.shape[1], X_train.shape[2])  # (time, features)
-    output_dim = len(target_cols)
-
-    cnn_bilstm_model = build_cnn_bilstm(input_shape, output_dim)
-
-    cnn_bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
-    cnn_bilstm_predictions = cnn_bilstm_model.predict(X_test)
-    return cnn_bilstm_predictions, y_test
-
-# target_columns = ['wind_direction', 'wind_speed', 'predominant_horizontal_visibility', 'precipitation',
-#                   'present_fog', 'cloud_nebulosity', 'cloud_altitude', 'air_temperature', 'dew_point', 'air_pressure']
-# cnn_predictions, cnn_test = predict_with_cnn(target_columns)
-# target_columns = ['air_pressure']
-# bilstm_predictions, bilstm_test = predict_with_bilstm(target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
-# cnn_bilstm_predictions, cnn_bilstm_test = predict_with_cnn_bilstm(target_columns)
-#
-# for i, col in enumerate(target_columns):
-#     print(f"\nBiLSTM Evaluation für {col}:")
-#     print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
-#     print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
-#     print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
-#
 # train_result = pd.DataFrame(
-#     data={'Train Prediction': bilstm_predictions.flatten(),
+#     data={'Time': time_test,
+#           'Train Prediction': bilstm_predictions.flatten(),
 #           'Actual Value': bilstm_test.flatten()})
-# with open('predictions/air_pressure_predictions.txt', 'w') as f:
-#     f.write(train_result.to_string())
+# train_result.sort_values(by=['Time'], ascending=True)
+# train_result.to_csv('predictions/dew_point_predictions.csv', index=False, columns=train_result.columns)
+
+# BiLSTM Evaluation for air_pressure:
+# MAE: 0.3042
+# RMSE: 0.5691
+# R² Score: 0.9863
+
+# BiLSTM Evaluation for air_temperature:
+# MAE: 1.0148
+# RMSE: 1.3881
+# R² Score: 0.9721
+
+# BiLSTM Evaluation for dew_point:
+# MAE: 0.8012
+# RMSE: 1.1313
+# R² Score: 0.9614
