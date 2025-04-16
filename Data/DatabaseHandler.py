@@ -2,7 +2,7 @@ import psycopg2
 import pandas as pd
 
 
-# class to handle the connection and data retrieval from the WeatherForecast database
+# CLASS TO HANDLE THE CONNECTION AND DATA RETRIEVAL FROM THE WeatherForecast DATABASE
 class DatabaseHandler:
     def __init__(self):
         self.connection = None

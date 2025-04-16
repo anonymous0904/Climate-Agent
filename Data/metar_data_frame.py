@@ -1,3 +1,7 @@
+# CREATE METAR DATA FRAME WITH RELEVANT VARIABLES FOR THE AERODROME FORECASTS
+# -THIS FILE TAKES THE INFORMATION FROM THE DATABASE-HANDLER CLASS AND TRANSFORMS THE
+# VALUES FOR EACH VARIABLE TO PREPARE IT FOR THE VALIDATION
+
 from DatabaseHandler import DatabaseHandler
 
 
@@ -81,6 +85,8 @@ def average_cloud_altitude_for_observation(row):
         return 0
 
 
+# this method takes the whole data frame from the database, keeps only relevant variables
+# and transforms it into another dataframe with corresponding values
 def get_metar_data_frame():
     metars_df = DatabaseHandler().get_metars_df()[5290::2].sort_values(
         'id')  # starting from the first day of 2022 and taking every hour
