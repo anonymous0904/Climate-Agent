@@ -30,7 +30,7 @@ def preprocess_data(df, target_cols, sequence_length=10):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM-Model - R² Score: 0.5243
+# BiLSTM-Model - R² Score: 0.8738
 def cloud_altitude_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -46,6 +46,7 @@ def cloud_altitude_model(input_shape):
     return model
 
 
+# R² Score: 0.8641
 # def cloud_altitude_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -62,12 +63,23 @@ def cloud_altitude_model(input_shape):
 #     return model
 
 
+def get_cloud_presence_prediction_df():
+    cloud_presence_df = pd.read_csv('predictions/cloud_presence_prediction.csv')
+    cloud_presence_df['Time'] = pd.to_datetime(cloud_presence_df['Time'])
+    return cloud_presence_df[['Time', 'Train Prediction']]
+
+
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(int)
-# metars_df_copy = metars_df[metars_df['cloud_presence'] == 1]
+metars_df['cloud_altitude_mean3'] = metars_df['cloud_altitude'].rolling(3).mean()
+metars_df['cloud_altitude'] = metars_df['cloud_altitude'].clip(lower=0, upper=200)
+
+metars_df_train = metars_df[:18671]
+metars_df_test = metars_df[18671:]
+
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-# metars_df.index = pd.to_datetime(metars_df_copy['observation_time'], format="%Y-%m-%d %H:%M:%S")
-input_features = ['cloud_altitude', 'cloud_presence', 'air_pressure', 'dew_point',
+input_features = ['cloud_altitude', 'cloud_altitude_mean3', 'cloud_presence', 'air_pressure',
+                  'dew_point',
                   'air_temperature']
 target_feature = ['cloud_altitude']
 
@@ -78,28 +90,49 @@ X_train = X[:split_index]
 X_test = X[split_index:]
 y_train = y[:split_index]
 y_test = y[split_index:]
-time_train = observation_times[:split_index]
-time_test = observation_times[split_index:]
+time_train = pd.to_datetime(observation_times[:split_index])
+time_test = pd.to_datetime(observation_times[split_index:])
+
+X_train_with_clouds = X_train[metars_df_train['cloud_presence'] == 1]
+y_train_with_clouds = y_train[metars_df_train['cloud_presence'] == 1]
+X_test_with_clouds = X_test[get_cloud_presence_prediction_df()['Train Prediction'] == 1]
+y_test_with_clouds = y_test[get_cloud_presence_prediction_df()['Train Prediction'] == 1]
 
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 y_train = y_train.astype('float32')
 y_test = y_test.astype('float32')
+X_train_with_clouds = X_train_with_clouds.astype('float32')
+y_train_with_clouds = y_train_with_clouds.astype('float32')
+X_test_with_clouds = X_test_with_clouds.astype('float32')
+y_test_with_clouds = y_test_with_clouds.astype('float32')
 
 cloud_altitude_model = cloud_altitude_model((X_train.shape[1], X_train.shape[2]))
 
-cloud_altitude_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=15, batch_size=32)
+cloud_altitude_model.fit(X_train_with_clouds, y_train_with_clouds,
+                         validation_data=(X_test_with_clouds, y_test_with_clouds), epochs=30, batch_size=32)
 
-cloud_altitude_predictions = cloud_altitude_model.predict(X_test)
-cloud_altitude_predictions = scaler.inverse_transform(cloud_altitude_predictions).astype(int)
-y_test = scaler.inverse_transform(y_test).astype(int)
+cloud_altitude_predictions_with_clouds = cloud_altitude_model.predict(X_test_with_clouds)
+cloud_altitude_predictions_with_clouds = scaler.inverse_transform(
+    cloud_altitude_predictions_with_clouds).flatten().astype(int)
+y_test_with_clouds = scaler.inverse_transform(y_test_with_clouds).astype(int)
 
-print(f"R² Score: {r2_score(y_test, cloud_altitude_predictions):.4f}")
+n_test = len(get_cloud_presence_prediction_df())
+y_test_unscaled = scaler.inverse_transform(y_test).flatten().astype(int)
+
+altitude_preds = np.zeros(n_test)
+altitude_preds[get_cloud_presence_prediction_df()['Train Prediction'] == 1] = cloud_altitude_predictions_with_clouds
+altitude_preds[get_cloud_presence_prediction_df()['Train Prediction'] == 0] = 0
+altitude_preds = pd.Series(altitude_preds).shift(-1)
+altitude_preds.iloc[-1] = 0
+altitude_preds = altitude_preds.astype(int)
+
+print(f"R² Score: {r2_score(y_test_unscaled, altitude_preds):.4f}")
 # R² Score: 0.5243
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,
-#           'Train Prediction': cloud_altitude_predictions.flatten(),
-#           'Actual Value': y_test.flatten()})
+#           'Train Prediction': altitude_preds,
+#           'Actual Value': y_test_unscaled})
 #
 # train_result.to_csv('predictions/cloud_altitude_predictions.csv', index=False, columns=train_result.columns)
