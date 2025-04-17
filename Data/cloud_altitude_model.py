@@ -128,7 +128,6 @@ altitude_preds.iloc[-1] = 0
 altitude_preds = altitude_preds.astype(int)
 
 print(f"R² Score: {r2_score(y_test_unscaled, altitude_preds):.4f}")
-# R² Score: 0.5243
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,
