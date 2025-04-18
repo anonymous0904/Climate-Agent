@@ -16,21 +16,21 @@ np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 
 
-def preprocess_data(df, target_cols, sequence_length=10):
-    df = df[target_cols]
+def preprocess_data(df, input_cols, target_cols, sequence_length=10):
     scaler = MinMaxScaler()
-    df_scaled = scaler.fit_transform(df)
+    df_scaled = scaler.fit_transform(df[input_cols])
+    df_scaled = pd.DataFrame(df_scaled, columns=input_cols, index=df.index)
 
     X, y = [], []
     for i in range(len(df_scaled) - sequence_length):
-        X.append(df_scaled[i:i + sequence_length])
-        y.append(df_scaled[i + sequence_length, [df.columns.get_loc(col) for col in target_cols]])
+        X.append(df_scaled.iloc[i:i + sequence_length].values)
+        y.append(df_scaled[target_cols].iloc[i + sequence_length].values)
 
     observation_times = df.index[sequence_length:]
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM-Model - R² Score: 0.8738
+# BiLSTM-Model - R² Score: 0.8829
 def cloud_altitude_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -46,7 +46,7 @@ def cloud_altitude_model(input_shape):
     return model
 
 
-# R² Score: 0.8641
+# R² Score: 0.8744
 # def cloud_altitude_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -69,21 +69,23 @@ def get_cloud_presence_prediction_df():
     return cloud_presence_df[['Time', 'Train Prediction']]
 
 
+def pad_predictions_for_inverse_transform(preds, total_features, target_index):
+    padded = np.zeros((len(preds), total_features))
+    padded[:, target_index] = preds.flatten()
+    return padded
+
+
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(int)
-metars_df['cloud_altitude_mean3'] = metars_df['cloud_altitude'].rolling(3).mean()
-metars_df['cloud_altitude'] = metars_df['cloud_altitude'].clip(lower=0, upper=200)
 
 metars_df_train = metars_df[:18671]
 metars_df_test = metars_df[18671:]
 
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-input_features = ['cloud_altitude', 'cloud_altitude_mean3', 'cloud_presence', 'air_pressure',
-                  'dew_point',
-                  'air_temperature']
+input_features = ['cloud_altitude', 'air_pressure', 'dew_point', 'air_temperature']
 target_feature = ['cloud_altitude']
 
-X, y, scaler, observation_times = preprocess_data(metars_df, target_feature)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
 split_index = int(len(X) * 0.8)
 
 X_train = X[:split_index]
@@ -110,15 +112,19 @@ y_test_with_clouds = y_test_with_clouds.astype('float32')
 cloud_altitude_model = cloud_altitude_model((X_train.shape[1], X_train.shape[2]))
 
 cloud_altitude_model.fit(X_train_with_clouds, y_train_with_clouds,
-                         validation_data=(X_test_with_clouds, y_test_with_clouds), epochs=30, batch_size=32)
+                         validation_data=(X_test_with_clouds, y_test_with_clouds), epochs=10, batch_size=32)
 
 cloud_altitude_predictions_with_clouds = cloud_altitude_model.predict(X_test_with_clouds)
-cloud_altitude_predictions_with_clouds = scaler.inverse_transform(
-    cloud_altitude_predictions_with_clouds).flatten().astype(int)
-y_test_with_clouds = scaler.inverse_transform(y_test_with_clouds).astype(int)
+
+target_index = input_features.index(target_feature[0])
+padded_preds = pad_predictions_for_inverse_transform(cloud_altitude_predictions_with_clouds, len(input_features),
+                                                     target_index)
+padded_y_test = pad_predictions_for_inverse_transform(y_test, len(input_features), target_index)
+
+cloud_altitude_predictions_with_clouds = scaler.inverse_transform(padded_preds)[:, target_index].flatten().astype(int)
 
 n_test = len(get_cloud_presence_prediction_df())
-y_test_unscaled = scaler.inverse_transform(y_test).flatten().astype(int)
+y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].flatten().astype(int)
 
 altitude_preds = np.zeros(n_test)
 altitude_preds[get_cloud_presence_prediction_df()['Train Prediction'] == 1] = cloud_altitude_predictions_with_clouds
