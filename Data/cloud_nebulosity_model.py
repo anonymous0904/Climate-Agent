@@ -6,7 +6,6 @@ from keras import Sequential, Input
 from keras.src.callbacks import EarlyStopping
 from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D, Flatten
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 from Data import csv_file_handler
