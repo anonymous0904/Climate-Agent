@@ -5,7 +5,7 @@ import numpy as np
 import metar_data_frame
 
 
-# calculate the circular mean of wind directions
+# calculate the circular mean of wind direction
 # value of 0 degrees indicates the absence of wind, corresponding wind speed will be 0
 # the direction of 0 degrees will be noted as 360 degrees
 def circular_mean_wind_direction(direction_angles, w=None):
