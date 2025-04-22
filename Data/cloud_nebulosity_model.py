@@ -31,7 +31,7 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     return np.array(X), np.array(y).astype(int), scaler, observation_times
 
 
-# BiLSTM - Accuracy: 0.9818
+# BiLSTM - Accuracy: 0.9662
 def build_cloud_nebulosity_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
@@ -44,7 +44,7 @@ def build_cloud_nebulosity_model(input_shape):
     return model
 
 
-# CNN + BiLSTM - Accuracy: 0.9469
+# CNN + BiLSTM - Accuracy: 0.9576
 # def build_cloud_nebulosity_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -58,6 +58,7 @@ def build_cloud_nebulosity_model(input_shape):
 #     model.add(Dense(5, activation='softmax'))
 #     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 #     return model
+
 
 # CNN - Accuracy: 0.8867
 # def build_cloud_nebulosity_model(input_shape):
@@ -76,7 +77,7 @@ def build_cloud_nebulosity_model(input_shape):
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(int)
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
-input_features = ['cloud_nebulosity', 'cloud_presence']
+input_features = ['cloud_nebulosity', 'cloud_presence', 'air_pressure', 'dew_point', 'air_temperature']
 target_feature = 'cloud_nebulosity'
 
 X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
@@ -100,6 +101,7 @@ cloud_nebulosity_model.fit(X_train, y_train, validation_data=(X_test, y_test), e
                            callbacks=[early_stopping])
 cloud_nebulosity_predictions = cloud_nebulosity_model.predict(X_test)
 cloud_nebulosity_predictions = np.argmax(cloud_nebulosity_predictions, axis=1)
+cloud_nebulosity_predictions = pd.Series(cloud_nebulosity_predictions)
 cloud_nebulosity_predictions = pd.Series(cloud_nebulosity_predictions).shift(-1)
 cloud_nebulosity_predictions.iloc[-1] = 0
 cloud_nebulosity_predictions = cloud_nebulosity_predictions.astype(int)
