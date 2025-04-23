@@ -52,35 +52,7 @@ def preprocess_data(df, input_features, sequence_length=24):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM - Mean Angular Error: 13.97°
-# def build_wind_direction_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(64)))
-#     model.add(Dense(128, activation='relu'))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(2))
-#
-#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-#     return model
-
-# CNN - Mean Angular Error: 14.23°
-# def build_wind_direction_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Dropout(0.3))
-#     model.add(Flatten())
-#     model.add(Dense(128, activation='relu'))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(2))
-#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-#     return model
-
-# CNN + BiLSTM - Mean Angular Error: 13.27°
+# CNN + BiLSTM - Mean Angular Error: 12.79°
 def build_wind_direction_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -101,10 +73,12 @@ metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
 metars_df['hour'] = metars_df.index.hour
 metars_df['month'] = metars_df.index.month
+metars_df['wind_presence'] = (metars_df['wind_speed'] > 0).astype(int)
 metars_df['wind_direction'] = metars_df['wind_direction'].rolling(window=3, center=True).mean().bfill().ffill()
 metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
-input_cols = ['air_temperature', 'dew_point', 'air_pressure', 'hour', 'month', 'wind_dir_sin', 'wind_dir_cos']
+input_cols = ['wind_presence', 'air_temperature', 'dew_point', 'air_pressure', 'hour', 'month', 'wind_dir_sin',
+              'wind_dir_cos']
 target_cols = ['wind_dir_sin', 'wind_dir_cos']
 
 X, y, scaler, observation_times = preprocess_data(metars_df, input_cols)
@@ -129,8 +103,8 @@ model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_s
 
 predictions = model.predict(X_test)
 
-pred_direction = (np.rad2deg(np.arctan2(predictions[:, 0], predictions[:, 1])) + 360) % 360
-actual_direction = (np.rad2deg(np.arctan2(y_test[:, 0], y_test[:, 1])) + 360) % 360
+pred_direction = (np.rad2deg(np.arctan2(predictions[:, 0], predictions[:, 1])) + 361) % 361
+actual_direction = (np.rad2deg(np.arctan2(y_test[:, 0], y_test[:, 1])) + 361) % 361
 
 angular_diff = np.abs(pred_direction - actual_direction)
 angular_error = np.minimum(angular_diff, 360 - angular_diff)
