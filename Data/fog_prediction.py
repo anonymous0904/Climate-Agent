@@ -24,7 +24,7 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     df_train = df[input_features]
     df_train = df_train[:18671]
     train_index = df_train.index
-    df_train = scaler.fit_transform(df_train)
+    df_train_scaled = scaler.fit_transform(df_train)
 
     air_pressure_pred = get_air_pressure_prediction_df().set_index('Time').rename(
         columns={'Train Prediction': 'air_pressure'})
@@ -37,18 +37,15 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     test_index = df_test.index
 
     df_test = df_test.join([air_temperature_pred, dew_point_pred, air_pressure_pred])
-    df_test = scaler.fit_transform(df_test)
-
-    df_train = pd.DataFrame(df_train, columns=input_features, index=train_index)
-    df_test = pd.DataFrame(df_test, columns=input_features, index=test_index)
+    df_test_scaled = scaler.fit_transform(df_test)
 
     X_train, y_train, X_test, y_test = [], [], [], []
     for i in range(len(df_train) - sequence_length):
-        X_train.append(df_train.iloc[i:i + sequence_length][input_features].values)
+        X_train.append(df_train_scaled[i:i + sequence_length])
         y_train.append(df_train.iloc[i + sequence_length][target_feature])
 
     for i in range(len(df_test) - sequence_length):
-        X_test.append(df_test.iloc[i:i + sequence_length][input_features].values)
+        X_test.append(df_test_scaled[i:i + sequence_length])
         y_test.append(df_test.iloc[i + sequence_length][target_feature])
 
     test_time = df_test.index[sequence_length:]
