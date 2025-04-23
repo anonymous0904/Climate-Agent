@@ -6,8 +6,8 @@ from keras.src.callbacks import EarlyStopping
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
-from keras.src.models import Sequential, Model
-from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, Bidirectional, Reshape
+from keras.src.models import Sequential
+from keras.src.layers import Input, Conv1D, MaxPooling1D, Dense, Dropout, LSTM, Bidirectional
 import tensorflow as tf
 
 seed_value = 42
@@ -45,14 +45,14 @@ def preprocess_data(df, input_features, sequence_length=24):
 
     X, y = [], []
     for i in range(len(df_scaled) - sequence_length):
-        X.append(df_scaled[i:i + sequence_length, :-1])
+        X.append(df_scaled[i:i + sequence_length])
         y.append(df_scaled[i + sequence_length, -2:])
 
     observation_times = df.index[sequence_length:]
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# CNN + BiLSTM - Mean Angular Error: 12.79°
+# CNN + BiLSTM - Mean Angular Error: 9.75°
 def build_wind_direction_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -99,7 +99,8 @@ y_test = y_test.astype('float32')
 
 model = build_wind_direction_model(X_train.shape[1:])
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32, callbacks=[early_stopping])
+history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32,
+                    callbacks=[early_stopping])
 
 predictions = model.predict(X_test)
 

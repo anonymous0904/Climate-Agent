@@ -22,11 +22,9 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 
     df_train = df[input_features]
     df_train = df_train[:18671]
-    train_index = df_train.index
     df_train_scaled = scaler.fit_transform(df_train)
     df_test = df[['cloud_nebulosity']]
     df_test = df_test[18671:]
-    test_index = df_test.index
 
     cloud_presence_pred = get_cloud_presence_prediction_df().set_index('Time').rename(
         columns={'Train Prediction': 'cloud_presence'})
