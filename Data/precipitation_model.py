@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 from keras import Sequential, Input
-from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D, Flatten
+from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.callbacks import EarlyStopping
@@ -49,32 +49,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     test_time = df_test.index[sequence_length:]
 
     return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), test_time
-
-
-# BiLSTM - MODEL - ACCURACY: 0.9516
-# def build_precipitation_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(3, activation='softmax'))  # 3 classes (0, 1, 2)
-#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-#     return model
-
-
-# CNN - Accuracy: 0.9518
-# def build_precipitation_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Dropout(0.3))
-#     model.add(Flatten())
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(3, activation='softmax'))
-#     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-#     return model
 
 
 # CNN + BiLSTM - Accuracy: 0.9289

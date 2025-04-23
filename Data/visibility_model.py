@@ -2,10 +2,12 @@ import random
 
 import numpy as np
 import pandas as pd
+from keras import Input
+
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
-from keras.src.layers import Dense, Bidirectional, LSTM, Dropout
+from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D
 from sklearn.metrics import r2_score
 import tensorflow as tf
 
@@ -30,10 +32,26 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# R² Score: 0.8762
-def build_bilstm_model(input_shape):
+# BiLSTM: R² Score: 0.8762
+# def build_precipitation_model(input_shape):
+#     model = Sequential()
+#     model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=input_shape))
+#     model.add(Dropout(0.2))
+#     model.add(Bidirectional(LSTM(32)))
+#     model.add(Dense(64, activation='relu'))
+#     model.add(Dense(1))
+#
+#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+#     return model
+
+# CNN + BiLSTM: R² Score: 0.8865
+def build_precipitation_model(input_shape):
     model = Sequential()
-    model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=input_shape))
+    model.add(Input(shape=input_shape))
+    model.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Dropout(0.3))
+    model.add(Bidirectional(LSTM(64, return_sequences=True)))
     model.add(Dropout(0.2))
     model.add(Bidirectional(LSTM(32)))
     model.add(Dense(64, activation='relu'))
@@ -41,6 +59,24 @@ def build_bilstm_model(input_shape):
 
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     return model
+
+
+def get_air_pressure_prediction_df():
+    air_pressure_df = pd.read_csv('predictions/air_pressure_predictions.csv')
+    air_pressure_df['Time'] = pd.to_datetime(air_pressure_df['Time'])
+    return air_pressure_df[['Time', 'Train Prediction']]
+
+
+def get_dew_point_prediction_df():
+    dew_point_df = pd.read_csv('predictions/dew_point_predictions.csv')
+    dew_point_df['Time'] = pd.to_datetime(dew_point_df['Time'])
+    return dew_point_df[['Time', 'Train Prediction']]
+
+
+def get_air_temperature_prediction_df():
+    air_temperature_df = pd.read_csv('predictions/air_temperature_predictions.csv')
+    air_temperature_df['Time'] = pd.to_datetime(air_temperature_df['Time'])
+    return air_temperature_df[['Time', 'Train Prediction']]
 
 
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
@@ -72,7 +108,7 @@ def predict_visibility_with_bilstm():
     y_train = y_train.astype('float32')
     y_test = y_test.astype('float32')
 
-    bilstm_model = build_bilstm_model(X_train.shape[1:])
+    bilstm_model = build_precipitation_model(X_train.shape[1:])
     bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
 
     bilstm_predictions = bilstm_model.predict(X_test)
