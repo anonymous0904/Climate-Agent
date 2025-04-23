@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 from keras.src.callbacks import EarlyStopping
 
-# from matplotlib import pyplot as plt
-
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential, Model
@@ -27,7 +25,7 @@ def preprocess_data(df, input_features, target_feature, sequence_length=24):
 
     X, y = [], []
     for i in range(len(df_scaled) - sequence_length):
-        X.append(df_scaled[i:i + sequence_length, :-1])
+        X.append(df_scaled[i:i + sequence_length])
         y.append(df_scaled[i + sequence_length, target_index])
 
     observation_times = df.index[sequence_length:]
@@ -49,7 +47,7 @@ def build_wind_speed_model(input_shape):
     return model
 
 
-# 1D-CNN + BiLSTM MODEL - R² Score: TODO
+# 1D-CNN + BiLSTM MODEL - R² Score: 0.8948
 # def build_wind_speed_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -57,27 +55,14 @@ def build_wind_speed_model(input_shape):
 #     model.add(MaxPooling1D(pool_size=2))
 #     model.add(Bidirectional(LSTM(64, return_sequences=True)))
 #     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
+#     model.add(Bidirectional(LSTM(64)))
+#     model.add(Dense(128, activation='relu'))
 #     model.add(Dense(64, activation='relu'))
 #     model.add(Dense(1))
 #
 #     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 #     return model
 
-
-# 1D-CNN MODEL - R² Score: 0.8729
-# def build_wind_speed_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Dropout(0.3))
-#     model.add(Flatten())
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1))
-#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-#     return model
-#
 
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
     padded = np.zeros((len(preds), total_features))
@@ -90,9 +75,11 @@ metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d
 metars_df['wind_speed'] = metars_df['wind_speed'].rolling(window=3, center=True).mean().bfill().ffill()
 metars_df['hour'] = metars_df.index.hour
 metars_df['month'] = metars_df.index.month
+metars_df['wind_presence'] = (metars_df['wind_speed'] > 0).astype(int)
 metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
-input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point', 'air_pressure', 'hour',
+input_cols = ['wind_speed', 'wind_presence', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point',
+              'air_pressure', 'hour',
               'month']
 target_col = 'wind_speed'
 X, y, scaler, observation_times = preprocess_data(metars_df, input_cols, target_col)
@@ -133,9 +120,3 @@ print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}"
 #           'Actual Value': y_test_unscaled.flatten()})
 #
 # train_result.to_csv('predictions/wind_speed_predictions.csv', index=False, columns=train_result.columns)
-
-# plt.plot(metars_df['wind_speed'], label='Raw Wind Speed')
-# plt.plot(metars_df['wind_speed'].rolling(3).mean(), label='Smoothed', linewidth=2)
-# plt.legend()
-# plt.title("Zgomot vs Smoothing")
-# plt.show()
