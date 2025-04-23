@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from keras import Sequential, Input
 from keras.src.callbacks import EarlyStopping
-from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D, Flatten
+from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -38,9 +38,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
 
     df_test = df_test.join([cloud_presence_pred, air_pressure_pred, dew_point_pred, air_temperature_pred])
     df_test_scaled = scaler.fit_transform(df_test)
-
-    # df_train = pd.DataFrame(df_train, columns=input_features, index=train_index)
-    # df_test = pd.DataFrame(df_test, columns=input_features, index=test_index)
 
     X_train, y_train, X_test, y_test = [], [], [], []
     for i in range(len(df_train) - sequence_length):
