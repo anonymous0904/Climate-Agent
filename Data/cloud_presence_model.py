@@ -62,20 +62,6 @@ def build_cloud_presence_model(input_shape):
     return model
 
 
-# 1D-CNN - MODEL  - Accuracy: 0.8944
-# def build_cloud_presence_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(64, kernel_size=3, activation='relu'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Dropout(0.3))
-#     model.add(Flatten())
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1, activation='sigmoid'))
-#     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-#     return model
-
-
 def predict_cloud_presence():
     metars_df = csv_file_handler.read_metar_df_from_csv_file()
     metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(int)
