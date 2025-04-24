@@ -149,6 +149,9 @@ angular_diff = np.abs(pred_direction - actual_direction)
 angular_error = np.minimum(angular_diff, 360 - angular_diff)
 mean_angular_error = np.mean(angular_error)
 
+wind_presence_prediction = get_wind_presence_prediction_df()[14:]['Train Prediction']
+pred_direction = np.array(pred_direction) * np.array(wind_presence_prediction)
+
 print(f"Mean Angular Error: {mean_angular_error:.2f}°")
 angular_error = evaluate_angular_accuracy(actual_direction, pred_direction)
 
