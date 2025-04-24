@@ -11,8 +11,6 @@ from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropou
 from sklearn.metrics import r2_score
 import tensorflow as tf
 
-# import matplotlib.pyplot as plt
-
 seed_value = 42
 random.seed(seed_value)
 np.random.seed(seed_value)
@@ -77,7 +75,7 @@ def build_wind_speed_model(input_shape):
     return model
 
 
-# 1D-CNN + BiLSTM MODEL - R² Score: 0.8948
+# 1D-CNN + BiLSTM MODEL - R² Score: 0.8672
 # def build_wind_speed_model(input_shape):
 #     model = Sequential()
 #     model.add(Input(shape=input_shape))
@@ -174,26 +172,3 @@ print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}"
 #           'Actual Value': y_test_unscaled.flatten()})
 #
 # train_result.to_csv('predictions/wind_speed_predictions.csv', index=False, columns=train_result.columns)
-
-# plt.figure(figsize=(12, 5))
-#
-# # Loss
-# plt.subplot(1, 2, 1)
-# plt.plot(history.history['loss'], label='Train Loss', color='blue')
-# plt.plot(history.history['val_loss'], label='Validation Loss', color='orange')
-# plt.title('Loss over Epochs')
-# plt.xlabel('Epoch')
-# plt.ylabel('Loss (MSE)')
-# plt.legend()
-#
-# # MAE
-# plt.subplot(1, 2, 2)
-# plt.plot(history.history['mae'], label='Train MAE', color='green')
-# plt.plot(history.history['val_mae'], label='Validation MAE', color='red')
-# plt.title('MAE over Epochs')
-# plt.xlabel('Epoch')
-# plt.ylabel('Mean Absolute Error')
-# plt.legend()
-#
-# plt.tight_layout()
-# plt.show()
