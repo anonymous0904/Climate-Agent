@@ -11,9 +11,9 @@ VAR_FILES = {
     "dew_point": "dew_point_predictions.csv",
     "cloud_altitude": "cloud_altitude_predictions.csv",
     "cloud_nebulosity": "cloud_nebulosity_predictions.csv",
-    "fog": "fog_predictions.csv",
+    "present_fog": "fog_predictions.csv",
     "precipitation": "precipitation_predictions.csv",
-    "visibility": "visibility_predictions.csv",
+    "predominant_horizontal_visibility": "visibility_predictions.csv",
     "wind_direction": "wind_direction_prediction.csv",
     "wind_speed": "wind_speed_predictions.csv"
 }
