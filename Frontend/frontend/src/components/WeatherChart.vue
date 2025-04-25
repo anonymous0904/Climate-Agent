@@ -108,6 +108,8 @@ watch(() => props.variable, async (newVar) => {
 
 .chart-container {
   flex-grow: 1;
+  width: 100%;
+  height: 100%;
   padding: 2rem;
   background-color: #1e1e1e;
 }

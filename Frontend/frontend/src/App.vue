@@ -1,7 +1,11 @@
 <template>
   <div class="app-container">
-    <Sidebar @select="selected = $event"/>
-    <WeatherChart :variable="selected" :title="variables[selected]"/>
+    <div class="sidebar-container">
+      <Sidebar @select="selected = $event"/>
+    </div>
+    <div class="chart-container">
+      <WeatherChart :variable="selected" :title="variables[selected]"/>
+    </div>
   </div>
 </template>
 
@@ -29,7 +33,21 @@ const variables: Record<string, string> = {
 <style>
 .app-container {
   display: flex;
-  height: 100vh;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  background-color: #121212;
+  color: white;
+}
+
+.sidebar-container {
+  width: 200px;
+  background-color: #1e1e1e;
+}
+
+.chart-container {
+  flex: 1;
+  overflow: auto;
 }
 </style>
 
