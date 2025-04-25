@@ -23,9 +23,9 @@ const variables: Record<string, string> = {
   dew_point: "Dew Point",
   cloud_altitude: "Cloud Height",
   cloud_nebulosity: "Cloud Cover",
-  fog: "Fog Presence",
+  present_fog: "Fog Presence",
   precipitation: "Precipitation",
-  visibility: "Visibility",
+  predominant_horizontal_visibility: "Visibility",
   wind_direction: "Wind Direction",
   wind_speed: "Wind Speed"
 }
