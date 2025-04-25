@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import {ref, watch} from 'vue'
-import {computed} from 'vue'
+import {ref, watch, computed, type Ref} from 'vue'
 import axios from 'axios'
 import {Line} from 'vue-chartjs'
 import {
@@ -8,14 +7,18 @@ import {
   Title, Tooltip, Legend,
   LineElement, PointElement, CategoryScale, LinearScale
 } from 'chart.js'
+import type {ChartOptions} from 'chart.js'
+import zoomPlugin from 'chartjs-plugin-zoom'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale)
+ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, zoomPlugin)
 
 interface WeatherData {
   Time: string
   ['Actual Value']: number
   ['Train Prediction']: number
 }
+
+const lineChart = ref<any>(null)
 
 const props = defineProps<{
   variable: string,
@@ -24,7 +27,7 @@ const props = defineProps<{
 
 const chartData = ref<any>(null)
 
-const chartOptions = computed(() => ({
+const chartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -37,6 +40,29 @@ const chartOptions = computed(() => ({
     legend: {
       labels: {
         color: '#fff'
+      }
+    },
+    zoom: {
+      pan: {
+        enabled: true,
+        mode: 'x',
+        overScaleMode: 'x',
+        threshold: 2
+      },
+
+      zoom: {
+        wheel: {enabled: true},
+        pinch: {enabled: true},
+        mode: 'x',
+        drag: {
+          enabled: true,
+          borderWidth: 1,
+          backgroundColor: 'rgba(255,255,255,0.15)'
+        },
+        limits: {
+          x: {min: 'original', max: 'original'},
+          y: {min: 'original', max: 'original'}
+        }
       }
     }
   },
@@ -96,7 +122,10 @@ watch(() => props.variable, async (newVar) => {
 
 <template>
   <div class="chart-container" v-if="chartData">
-    <Line :data="chartData" :options="chartOptions"/>
+    <Line ref="lineChart" :data="chartData" :options="chartOptions"/>
+    <button class="reset-btn" @click="lineChart?.chart?.resetZoom()">
+      Reset zoom
+    </button>
   </div>
   <div v-else class="chart-loading">
     Loading data...
@@ -123,5 +152,20 @@ watch(() => props.variable, async (newVar) => {
   justify-content: center;
   background-color: #1e1e1e;
 }
+
+.reset-btn {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: #333;
+  border: 1px solid #555;
+  color: #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  background: #444;
+}
+
 
 </style>
