@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ref, watch, computed, type Ref} from 'vue'
 import axios from 'axios'
-import {Line} from 'vue-chartjs'
+import {Bar, Line} from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title, Tooltip, Legend,
@@ -24,6 +24,15 @@ const props = defineProps<{
   variable: string,
   title: string
 }>()
+
+const categoricalMap: Record<string, string[]> = {
+  present_fog: ['No fog', 'Fog'],
+  precipitation: ['None', 'Rain', 'Snow'],
+  cloud_nebulosity: ['Sky clear', 'Few', 'Scattered', 'Broken', 'Overcast']
+}
+
+const isCategorical = (v: string) => Object.prototype.hasOwnProperty.call(categoricalMap, v)
+
 
 const chartData = ref<any>(null)
 
@@ -75,42 +84,54 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         color: '#ccc'
       }
     },
-    y: {
-      ticks: {color: '#ccc'},
-      title: {
-        display: true,
-        text: props.variable,
-        color: '#ccc'
+    y: isCategorical(props.variable)
+      ? {
+        ticks: {
+          color: '#ccc',
+          stepSize: 1,
+          callback: (val: number | string) =>
+            categoricalMap[props.variable][Number(val)] ?? val
+        },
+        suggestedMin: 0,
+        suggestedMax: categoricalMap[props.variable].length - 1
       }
-    }
+      : {
+        ticks: {color: '#ccc'},
+        title: {
+          display: true,
+          text: props.variable,
+          color: '#ccc'
+        }
+      }
   }
 }))
+
+function buildDataset(label: string, values: number[], color: string, categorical: boolean) {
+  return {
+    label,
+    data: values,
+    borderColor: color,
+    backgroundColor: categorical ? color + '55' : 'transparent',
+    fill: false,
+    tension: categorical ? 0 : 0.3,
+    stepped: categorical ? true : false,
+    type: categorical ? 'bar' : 'line'
+  }
+}
+
 
 watch(() => props.variable, async (newVar) => {
   chartData.value = null
   try {
     const res = await axios.get<WeatherData[]>(`http://localhost:5000/api/${newVar}`)
     const data = res.data
+    const categorical = isCategorical(newVar)
 
     chartData.value = {
       labels: data.map(d => d.Time),
       datasets: [
-        {
-          label: 'Actual',
-          data: data.map(d => d['Actual Value']),
-          borderColor: '#03DAC6',
-          backgroundColor: 'transparent',
-          fill: false,
-          tension: 0.3
-        },
-        {
-          label: 'Prediction',
-          data: data.map(d => d['Train Prediction']),
-          borderColor: '#BB86FC',
-          backgroundColor: 'transparent',
-          fill: false,
-          tension: 0.3
-        }
+        buildDataset('Actual', data.map(d => d['Actual Value']), '#03DAC6', categorical),
+        buildDataset('Prediction', data.map(d => d['Train Prediction']), '#BB86FC', categorical)
       ]
     }
   } catch (err) {
