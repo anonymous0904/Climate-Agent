@@ -13,6 +13,29 @@ html, body, #app {
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
+  position: relative;
+  overflow: hidden;
+}
+
+#app::before {
+  content: "";
+  position: absolute;
+  inset: 0; /* acoperă tot ecranul */
+  z-index: -1; /* rămâne sub conținut */
+  background-image: radial-gradient(at 25% 20%, rgba(0, 180, 255, 0.25) 0%, transparent 60%),
+  radial-gradient(at 80% 75%, rgba(178, 102, 255, 0.25) 0%, transparent 60%),
+  linear-gradient(135deg, #0d0d17 0%, #1e1e2a 40%, #121212 100%);
+  background-blend-mode: overlay;
+  animation: gradientShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
 }
 
 a,
@@ -34,10 +57,5 @@ a,
     display: flex;
     place-items: center;
   }
-
-  /*#app {*/
-  /*  display: grid;*/
-  /*  grid-template-columns: 1fr 1fr;*/
-  /*  padding: 0 2rem;*/
-  /*}*/
+  
 }
