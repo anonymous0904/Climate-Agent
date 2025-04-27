@@ -3,7 +3,8 @@
     <div class="sidebar-container">
       <Sidebar @select="selected = $event"/>
     </div>
-    <div class="chart-container">
+    <div class="content-container">
+      <TopBar title="Cluj-Napoca International Airport"/>
       <WeatherChart :variable="selected" :title="variables[selected]"/>
     </div>
   </div>
@@ -13,6 +14,7 @@
 import {ref} from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import WeatherChart from './components/WeatherChart.vue'
+import TopBar from "@/components/TopBar.vue";
 
 const selected = ref<string>('air_temperature')
 
@@ -40,6 +42,13 @@ const variables: Record<string, string> = {
   color: white;
 }
 
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
 .sidebar-container {
   width: 200px;
   background-color: #1e1e1e;
@@ -47,6 +56,7 @@ const variables: Record<string, string> = {
 
 .chart-container {
   flex: 1;
+  margin-top: 1rem;
   overflow: auto;
 }
 </style>

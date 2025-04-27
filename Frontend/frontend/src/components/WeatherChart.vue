@@ -11,7 +11,7 @@ import type {ChartOptions} from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, BarElement,
-    BarController, zoomPlugin)
+  BarController, zoomPlugin)
 
 interface WeatherData {
   Time: string
@@ -86,24 +86,24 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       }
     },
     y: isCategorical(props.variable)
-        ? {
-          ticks: {
-            color: '#ccc',
-            stepSize: 1,
-            callback: (val: number | string) =>
-                categoricalMap[props.variable][Number(val)] ?? val
-          },
-          suggestedMin: 0,
-          suggestedMax: categoricalMap[props.variable].length - 1
+      ? {
+        ticks: {
+          color: '#ccc',
+          stepSize: 1,
+          callback: (val: number | string) =>
+            categoricalMap[props.variable][Number(val)] ?? val
+        },
+        suggestedMin: 0,
+        suggestedMax: categoricalMap[props.variable].length - 1
+      }
+      : {
+        ticks: {color: '#ccc'},
+        title: {
+          display: true,
+          text: props.variable,
+          color: '#ccc'
         }
-        : {
-          ticks: {color: '#ccc'},
-          title: {
-            display: true,
-            text: props.variable,
-            color: '#ccc'
-          }
-        }
+      }
   }
 }))
 
@@ -145,10 +145,10 @@ watch(() => props.variable, async (newVar) => {
 <template>
   <div class="chart-container" v-if="chartData">
     <component
-        :is="isCategorical(variable) ? Bar : Line"
-        ref="lineChart"
-        :data="chartData"
-        :options="chartOptions"
+      :is="isCategorical(variable) ? Bar : Line"
+      ref="lineChart"
+      :data="chartData"
+      :options="chartOptions"
     />
     <button class="reset-btn" @click="lineChart?.chart?.resetZoom()">
       Reset zoom
@@ -168,6 +168,13 @@ watch(() => props.variable, async (newVar) => {
   height: 100%;
   padding: 2rem;
   background-color: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: .5px;
 }
 
 .chart-loading {
