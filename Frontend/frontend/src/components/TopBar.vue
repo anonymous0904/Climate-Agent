@@ -1,14 +1,35 @@
 <template>
   <div class="top-bar">
+    <Plane class="icon"/>
     <h2>{{ title }}</h2>
+    <Star class="icon fav"/>
   </div>
 </template>
 
 <script lang="ts" setup>
+import {Plane, Star} from 'lucide-vue-next'
+
 defineProps<{ title: string }>()
 </script>
 
 <style scoped>
+
+.icon {
+  width: 26px;
+  height: 26px;
+}
+
+.fav {
+  margin-left: auto;
+  opacity: .6;
+  cursor: pointer;
+}
+
+.fav:hover {
+  opacity: 1;
+  color: gold;
+}
+
 .top-bar {
   display: flex;
   align-items: center;
