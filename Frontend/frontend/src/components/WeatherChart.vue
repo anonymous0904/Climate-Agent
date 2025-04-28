@@ -78,7 +78,14 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
   },
   scales: {
     x: {
-      ticks: {color: '#ccc'},
+      ticks: {
+        color: '#ccc',
+        font: {size: 10},
+        autoSkip: true,
+        maxTicksLimit: 12,
+        maxRotation: 30,
+        minRotation: 0
+      },
       title: {
         display: true,
         text: 'Time',
