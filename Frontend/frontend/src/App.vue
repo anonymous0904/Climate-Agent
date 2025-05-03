@@ -38,7 +38,9 @@ const variables: Record<string, string> = {
   flex-direction: row;
   height: 100%;
   width: 100%;
-  background-color: #121212;
+  position: relative;
+  overflow: hidden;
+  /* background-color: #121212; */
   color: white;
 }
 
@@ -51,7 +53,9 @@ const variables: Record<string, string> = {
 
 .sidebar-container {
   width: 200px;
-  background-color: #1e1e1e;
+  /*background-color: #1e1e1e;*/
+  position: relative;
+  overflow: hidden;
 }
 
 .chart-container {
