@@ -151,11 +151,14 @@ watch(() => props.variable, async (newVar) => {
 
 <template>
   <div class="chart-container" v-if="chartData">
-    <div class="chart-header">
-      <button class="reset-btn" @click="lineChart?.chart?.resetZoom()">
-        Reset&nbsp;zoom
-      </button>
-    </div>
+
+    <button
+      class="reset-btn"
+      @click="lineChart?.chart?.resetZoom()"
+      title="Reset zoom">
+      Reset zoom
+    </button>
+
     <component
       class="chart-body"
       :is="isCategorical(variable) ? Bar : Line"
@@ -173,6 +176,7 @@ watch(() => props.variable, async (newVar) => {
 <style scoped>
 
 .chart-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -196,8 +200,13 @@ watch(() => props.variable, async (newVar) => {
 }
 
 .reset-btn {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.75rem;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+
+  padding: 2px 10px;
+  font-size: .75rem;
   background: #333;
   border: 1px solid #555;
   color: #ccc;
@@ -207,10 +216,6 @@ watch(() => props.variable, async (newVar) => {
 
 .reset-btn:hover {
   background: #444;
-}
-
-.chart-header {
-  margin-bottom: .75rem;
 }
 
 .chart-body {
