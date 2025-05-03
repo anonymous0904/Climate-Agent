@@ -157,6 +157,7 @@ watch(() => props.variable, async (newVar) => {
       </button>
     </div>
     <component
+      class="chart-body"
       :is="isCategorical(variable) ? Bar : Line"
       ref="lineChart"
       :data="chartData"
@@ -172,18 +173,16 @@ watch(() => props.variable, async (newVar) => {
 <style scoped>
 
 .chart-container {
-  flex-grow: 1;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  padding: 2rem;
-  background-color: #1e1e1e;
+  background: #1e1e1e;
   border: 1px solid rgba(255, 255, 255, 0.08);
-
   padding: 1rem 2rem;
   border-radius: 12px;
   color: #fff;
-  font-weight: 600;
-  letter-spacing: .5px;
+  /*font-weight: 600;
+  letter-spacing: .5px;*/
 }
 
 .chart-loading {
@@ -210,5 +209,13 @@ watch(() => props.variable, async (newVar) => {
   background: #444;
 }
 
+.chart-header {
+  margin-bottom: .75rem;
+}
+
+.chart-body {
+  flex: 1 1 0;
+  min-height: 0;
+}
 
 </style>

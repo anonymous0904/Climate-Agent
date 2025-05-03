@@ -9,12 +9,10 @@
     </div>
 
     <div class="chart-shell">
-      <div class="chart-scroll">
-        <WeatherChart
-          :variable="selected"
-          :title="variables[selected]"
-        />
-      </div>
+      <WeatherChart
+        :variable="selected"
+        :title="variables[selected]"
+      />
     </div>
 
   </div>
@@ -94,7 +92,7 @@ const variables: Record<string, string> = {
 
 .sidebar-scroll {
   flex: 1;
-  overflow: auto; /* scrollbar rămâne aici */
+  /* overflow: auto;  scrollbar rămâne aici */
 }
 
 .chart-shell {
@@ -103,7 +101,7 @@ const variables: Record<string, string> = {
   background: #1e1e1e;
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: 0 12px 12px 0; /* colțuri dreapta */
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
