@@ -151,15 +151,17 @@ watch(() => props.variable, async (newVar) => {
 
 <template>
   <div class="chart-container" v-if="chartData">
+    <div class="chart-header">
+      <button class="reset-btn" @click="lineChart?.chart?.resetZoom()">
+        Reset&nbsp;zoom
+      </button>
+    </div>
     <component
       :is="isCategorical(variable) ? Bar : Line"
       ref="lineChart"
       :data="chartData"
       :options="chartOptions"
     />
-    <button class="reset-btn" @click="lineChart?.chart?.resetZoom()">
-      Reset zoom
-    </button>
   </div>
   <div v-else class="chart-loading">
     Loading data...

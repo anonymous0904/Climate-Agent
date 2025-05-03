@@ -1,12 +1,22 @@
 <template>
   <div class="app-container">
-    <div class="sidebar-container">
-      <Sidebar @select="selected = $event"/>
+    <TopBar class="top-bar" title="Cluj-Napoca International Airport"/>
+
+    <div class="sidebar-shell">
+      <div class="sidebar-scroll">
+        <Sidebar @select="selected = $event"/>
+      </div>
     </div>
-    <div class="content-container">
-      <TopBar title="Cluj-Napoca International Airport"/>
-      <WeatherChart :variable="selected" :title="variables[selected]"/>
+
+    <div class="chart-shell">
+      <div class="chart-scroll">
+        <WeatherChart
+          :variable="selected"
+          :title="variables[selected]"
+        />
+      </div>
     </div>
+
   </div>
 </template>
 
@@ -34,8 +44,10 @@ const variables: Record<string, string> = {
 
 <style>
 .app-container {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: auto 1fr;
+
   height: 100%;
   width: 100%;
   position: relative;
@@ -44,18 +56,80 @@ const variables: Record<string, string> = {
   color: white;
 }
 
-.content-container {
+.app-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(at 25% 20%, rgba(0, 180, 255, 0.25) 0%, transparent 60%),
+  radial-gradient(at 80% 75%, rgba(178, 102, 255, 0.25) 0%, transparent 60%),
+  linear-gradient(135deg, #0d0d17 0%, #1e1e2a 40%, #121212 100%);
+  background-blend-mode: overlay;
+  animation: gradientShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+.top-bar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.sidebar-shell {
+  grid-column: 1;
+  grid-row: 2;
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 12px 0 0 12px; /* colțuri stânga */
+  overflow: hidden; /* taie strict la radius */
+  display: flex;
+}
+
+.sidebar-scroll {
   flex: 1;
+  overflow: auto; /* scrollbar rămâne aici */
+}
+
+.chart-shell {
+  grid-column: 2;
+  grid-row: 2;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 0 12px 12px 0; /* colțuri dreapta */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem 2rem 2rem; /* mic spațiu interior */
+}
+
+.content-container {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   overflow: auto;
+  padding: 0 1rem 1rem;
 }
 
 .sidebar-container {
-  width: 200px;
-  /*background-color: #1e1e1e;*/
+  grid-column: 1;
+  grid-row: 2;
   position: relative;
   overflow: hidden;
+  /*background: #121212;*/
+  /*overflow: auto; */
 }
 
 .chart-container {
