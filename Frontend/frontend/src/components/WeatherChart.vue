@@ -185,8 +185,6 @@ watch(() => props.variable, async (newVar) => {
   padding: 1rem 2rem;
   border-radius: 12px;
   color: #fff;
-  /*font-weight: 600;
-  letter-spacing: .5px;*/
 }
 
 .chart-loading {

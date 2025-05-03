@@ -83,27 +83,22 @@ const variables: Record<string, string> = {
 .sidebar-shell {
   grid-column: 1;
   grid-row: 2;
-  background: #121212;
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 12px 0 0 12px; /* colțuri stânga */
-  overflow: hidden; /* taie strict la radius */
+  overflow: hidden;
   display: flex;
+  border-top: 0;
+  border-radius: 0 0 0 12px;
 }
 
 .sidebar-scroll {
   flex: 1;
-  /* overflow: auto;  scrollbar rămâne aici */
 }
 
 .chart-shell {
-  grid-column: 2;
-  grid-row: 2;
   background: #1e1e1e;
   border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 0 12px 12px 0; /* colțuri dreapta */
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
+  border-top: 0;
+  border-radius: 0 0 12px 0;
+  overflow: hidden;
 }
 
 .chart-scroll {

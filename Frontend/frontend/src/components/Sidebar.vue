@@ -36,7 +36,7 @@ const variables: Record<string, string> = {
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  background-color: #121212;
+  background-color: transparent;
 }
 
 button {
