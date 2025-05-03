@@ -40,9 +40,10 @@ const variables: Record<string, string> = {
 }
 
 button {
-  background: transparent;
+  background: #1c1c27;
   color: #fff;
   border: 1px solid #444;
+  border-radius: 4px;
   margin: 0.2rem 0;
   padding: 0.5rem;
   cursor: pointer;

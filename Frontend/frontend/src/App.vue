@@ -94,10 +94,10 @@ const variables: Record<string, string> = {
 }
 
 .chart-shell {
-  background: #1e1e1e;
-  border: 1px solid rgba(255, 255, 255, .08);
+  background: transparent;
+  /*border: 1px solid rgba(255, 255, 255, .08);*/
   border-top: 0;
-  border-radius: 0 0 12px 0;
+  border-radius: 12px;
   overflow: hidden;
 }
 

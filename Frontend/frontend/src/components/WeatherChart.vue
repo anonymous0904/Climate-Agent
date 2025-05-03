@@ -180,8 +180,9 @@ watch(() => props.variable, async (newVar) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e1e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+
   padding: 1rem 2rem;
   border-radius: 12px;
   color: #fff;
@@ -205,7 +206,8 @@ watch(() => props.variable, async (newVar) => {
 
   padding: 2px 10px;
   font-size: .75rem;
-  background: #333;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
   border: 1px solid #555;
   color: #ccc;
   border-radius: 6px;
