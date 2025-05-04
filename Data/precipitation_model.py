@@ -18,40 +18,20 @@ tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, input_features, target_feature, sequence_length=10):
+    df = df[input_features]
     scaler = MinMaxScaler()
+    df_scaled = scaler.fit_transform(df)
 
-    df_train = df[input_features]
-    df_train = df_train[:18671]
-    df_train_scaled = scaler.fit_transform(df_train)
-    df_test = df[['precipitation']]
-    df_test = df_test[18671:]
+    X, y = [], []
+    for i in range(len(df_scaled) - sequence_length):
+        X.append(df_scaled[i:i + sequence_length])
+        y.append(df.iloc[i + sequence_length][target_feature])
 
-    cloud_presence_pred = get_cloud_presence_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'cloud_presence'})
-    air_pressure_pred = get_air_pressure_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_pressure'})
-    dew_point_pred = get_dew_point_prediction_df().set_index('Time').rename(columns={'Train Prediction': 'dew_point'})
-    air_temperature_pred = get_air_temperature_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_temperature'})
-
-    df_test = df_test.join([cloud_presence_pred, air_pressure_pred, dew_point_pred, air_temperature_pred])
-    df_test_scaled = scaler.fit_transform(df_test)
-
-    X_train, y_train, X_test, y_test = [], [], [], []
-    for i in range(len(df_train) - sequence_length):
-        X_train.append(df_train_scaled[i:i + sequence_length])
-        y_train.append(df_train.iloc[i + sequence_length][target_feature])
-
-    for i in range(len(df_test) - sequence_length):
-        X_test.append(df_test_scaled[i:i + sequence_length])
-        y_test.append(df_test.iloc[i + sequence_length][target_feature])
-
-    test_time = df_test.index[sequence_length:]
-
-    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), test_time
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y).astype(int), scaler, observation_times
 
 
-# CNN + BiLSTM - Accuracy: 0.9289
+# CNN + BiLSTM - Accuracy: 0.9522
 def build_precipitation_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -67,37 +47,20 @@ def build_precipitation_model(input_shape):
     return model
 
 
-def get_cloud_presence_prediction_df():
-    cloud_presence_df = pd.read_csv('predictions/cloud_presence_prediction.csv')
-    cloud_presence_df['Time'] = pd.to_datetime(cloud_presence_df['Time'])
-    return cloud_presence_df[['Time', 'Train Prediction']]
-
-
-def get_air_pressure_prediction_df():
-    air_pressure_df = pd.read_csv('predictions/air_pressure_predictions.csv')
-    air_pressure_df['Time'] = pd.to_datetime(air_pressure_df['Time'])
-    return air_pressure_df[['Time', 'Train Prediction']]
-
-
-def get_dew_point_prediction_df():
-    dew_point_df = pd.read_csv('predictions/dew_point_predictions.csv')
-    dew_point_df['Time'] = pd.to_datetime(dew_point_df['Time'])
-    return dew_point_df[['Time', 'Train Prediction']]
-
-
-def get_air_temperature_prediction_df():
-    air_temperature_df = pd.read_csv('predictions/air_temperature_predictions.csv')
-    air_temperature_df['Time'] = pd.to_datetime(air_temperature_df['Time'])
-    return air_temperature_df[['Time', 'Train Prediction']]
-
-
 metars_df = csv_file_handler.read_metar_df_from_csv_file()
 metars_df['cloud_presence'] = (metars_df['cloud_nebulosity'] > 0).astype(int)
 metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
 input_features = ['precipitation', 'cloud_presence', 'air_pressure', 'dew_point', 'air_temperature']
 target_feature = 'precipitation'
 
-X_train, y_train, X_test, y_test, time_test = preprocess_data(metars_df, input_features, target_feature)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
+split_index = int(len(X) * 0.8)
+X_train = X[:split_index]
+X_test = X[split_index:]
+y_train = y[:split_index]
+y_test = y[split_index:]
+time_train = observation_times[:split_index]
+time_test = observation_times[split_index:]
 
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')

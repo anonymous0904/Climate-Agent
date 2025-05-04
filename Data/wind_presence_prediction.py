@@ -3,12 +3,12 @@ import random
 import numpy as np
 import pandas as pd
 from keras import Input
+from keras.src.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 
 import csv_file_handler
 from keras.src.models import Sequential
 from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import tensorflow as tf
 
@@ -64,12 +64,14 @@ def predict_wind_presence():
     time_test = observation_times[split_index:]
 
     wind_presence_model = build_wind_presence_model((X_train.shape[1], X_train.shape[2]))
-    wind_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
+    early_stopping = EarlyStopping(monitor='val_accuracy', patience=5, mode='max', restore_best_weights=True, verbose=1)
+    history = wind_presence_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32,
+                                      callbacks=[early_stopping])
     wind_presence_predictions = wind_presence_model.predict(X_test)
-    return wind_presence_predictions, y_test, time_test
+    return wind_presence_predictions, y_test, time_test, history
 
 
-wind_presence_prediction, y_test, time_test = predict_wind_presence()
+wind_presence_prediction, y_test, time_test, history = predict_wind_presence()
 wind_presence_prediction_binary = (wind_presence_prediction > 0.5).astype(int)
 wind_presence_test = y_test.astype(int)
 print(f"Accuracy: {accuracy_score(wind_presence_test, wind_presence_prediction_binary):.4f}")

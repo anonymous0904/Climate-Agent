@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from keras import Input
 from keras.src.callbacks import EarlyStopping
+from matplotlib import pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 import csv_file_handler
@@ -19,57 +20,18 @@ tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, input_features, target_feature, sequence_length=10):
-    scaler = MinMaxScaler()
+    df = df[input_features]
 
-    df_train = df[input_features]
-    df_train = df_train[:18671]
-    train_index = df_train.index
-    df_train_scaled = scaler.fit_transform(df_train)
+    X, y = [], []
+    for i in range(len(df) - sequence_length):
+        X.append(df.iloc[i:i + sequence_length][input_features].values)
+        y.append(df.iloc[i + sequence_length][target_feature])
 
-    air_pressure_pred = get_air_pressure_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_pressure'})
-    air_temperature_pred = get_air_temperature_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_temperature'})
-    dew_point_pred = get_dew_point_prediction_df().set_index('Time').rename(columns={'Train Prediction': 'dew_point'})
-
-    df_test = df[['present_fog']]
-    df_test = df_test[18671:]
-    test_index = df_test.index
-
-    df_test = df_test.join([air_temperature_pred, dew_point_pred, air_pressure_pred])
-    df_test_scaled = scaler.fit_transform(df_test)
-
-    X_train, y_train, X_test, y_test = [], [], [], []
-    for i in range(len(df_train) - sequence_length):
-        X_train.append(df_train_scaled[i:i + sequence_length])
-        y_train.append(df_train.iloc[i + sequence_length][target_feature])
-
-    for i in range(len(df_test) - sequence_length):
-        X_test.append(df_test_scaled[i:i + sequence_length])
-        y_test.append(df_test.iloc[i + sequence_length][target_feature])
-
-    test_time = df_test.index[sequence_length:]
-
-    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), test_time
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), observation_times
 
 
-# BINARY CLASSIFICATION MODELS FOR THE PRESENCE OF FOG
-
-# BiLSTM - MODEL - ACCURACY: 0.9897
-# def build_fog_presence_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1, activation='sigmoid'))
-#
-#     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-#     return model
-
-
-# HYBRID 1D-CNN + BiLSTM - MODEL - ACCURACY: 0.9886
+# HYBRID 1D-CNN + BiLSTM - MODEL - ACCURACY: 0.9786
 def build_fog_presence_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -85,31 +47,24 @@ def build_fog_presence_model(input_shape):
     return model
 
 
-def get_air_pressure_prediction_df():
-    air_pressure_df = pd.read_csv('predictions/air_pressure_predictions.csv')
-    air_pressure_df['Time'] = pd.to_datetime(air_pressure_df['Time'])
-    return air_pressure_df[['Time', 'Train Prediction']]
-
-
-def get_dew_point_prediction_df():
-    dew_point_df = pd.read_csv('predictions/dew_point_predictions.csv')
-    dew_point_df['Time'] = pd.to_datetime(dew_point_df['Time'])
-    return dew_point_df[['Time', 'Train Prediction']]
-
-
-def get_air_temperature_prediction_df():
-    air_temperature_df = pd.read_csv('predictions/air_temperature_predictions.csv')
-    air_temperature_df['Time'] = pd.to_datetime(air_temperature_df['Time'])
-    return air_temperature_df[['Time', 'Train Prediction']]
-
-
 def predict_fog_presence():
     metars_df = csv_file_handler.read_metar_df_from_csv_file()
     metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d %H:%M:%S")
     input_features = ['present_fog', 'air_temperature', 'dew_point', 'air_pressure']
     target_feature = 'present_fog'
 
-    X_train, y_train, X_test, y_test, time_test = preprocess_data(metars_df, input_features, target_feature)
+    scaler = MinMaxScaler()
+    metars_df[input_features] = scaler.fit_transform(metars_df[input_features])
+
+    X, y, observation_times = preprocess_data(metars_df, input_features, target_feature)
+    split_index = int(len(X) * 0.8)
+
+    X_train = X[:split_index]
+    X_test = X[split_index:]
+    y_train = y[:split_index]
+    y_test = y[split_index:]
+    time_train = observation_times[:split_index]
+    time_test = observation_times[split_index:]
 
     fog_presence_model = build_fog_presence_model((X_train.shape[1], X_train.shape[2]))
     early_stopping = EarlyStopping(monitor='val_accuracy', patience=5, mode='max', restore_best_weights=True, verbose=1)

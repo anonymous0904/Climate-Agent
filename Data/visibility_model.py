@@ -17,62 +17,19 @@ tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, input_features, target_feature, sequence_length=10):
+    df = df[input_features]
     scaler = MinMaxScaler()
-
-    df_train = df[input_features]
-    df_train = df_train[:18671]
-    df_train_scaled = scaler.fit_transform(df_train)
-    df_test = df[['predominant_horizontal_visibility']]
-    df_test = df_test[18671:]
-
-    fog_pred = get_fog_prediction_df().set_index('Time').rename(columns={'Train Prediction': 'present_fog'})
-    precipitation_pred = get_precipitation_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'precipitation'})
-    wind_direction_pred = get_wind_direction_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'wind_direction'})
-    wind_speed_pred = get_wind_direction_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'wind_speed'})
-    cloud_altitude_pred = get_cloud_altitude_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'cloud_altitude'})
-    cloud_nebulosity_pred = get_cloud_nebulosity_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'cloud_nebulosity'})
-    air_pressure_pred = get_air_pressure_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_pressure'})
-    dew_point_pred = get_dew_point_prediction_df().set_index('Time').rename(columns={'Train Prediction': 'dew_point'})
-    air_temperature_pred = get_air_temperature_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_temperature'})
-
-    df_test = df_test.join(
-        [fog_pred, precipitation_pred, wind_direction_pred, wind_speed_pred, cloud_altitude_pred, cloud_nebulosity_pred,
-         air_pressure_pred, dew_point_pred, air_temperature_pred])
-    df_test_scaled = scaler.fit_transform(df_test)
+    df_scaled = scaler.fit_transform(df)
     target_index = input_features.index(target_feature)
 
-    X_train, y_train, X_test, y_test = [], [], [], []
-    for i in range(len(df_train_scaled) - sequence_length):
-        X_train.append(df_train_scaled[i:i + sequence_length])
-        y_train.append(df_train_scaled[i + sequence_length, target_index])
+    X, y = [], []
+    for i in range(len(df_scaled) - sequence_length):
+        X.append(df_scaled[i:i + sequence_length, :-1])
+        y.append(df_scaled[i + sequence_length, target_index])
 
-    for i in range(len(df_test_scaled) - sequence_length):
-        X_test.append(df_test_scaled[i:i + sequence_length])
-        y_test.append(df_test_scaled[i + sequence_length, target_index])
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), scaler, observation_times
 
-    test_time = df_test.index[sequence_length:]
-
-    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), test_time, scaler
-
-
-# BiLSTM: R² Score: 0.8762
-# def build_visibility_model(input_shape):
-#     model = Sequential()
-#     model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=input_shape))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1))
-#
-#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-#     return model
 
 # CNN + BiLSTM: R² Score: 0.8865
 def build_visibility_model(input_shape):
@@ -91,60 +48,6 @@ def build_visibility_model(input_shape):
     return model
 
 
-def get_fog_prediction_df():
-    fog_prediction_df = pd.read_csv('predictions/fog_predictions.csv')
-    fog_prediction_df['Time'] = pd.to_datetime(fog_prediction_df['Time'])
-    return fog_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_precipitation_prediction_df():
-    precipitation_prediction_df = pd.read_csv('predictions/precipitation_predictions.csv')
-    precipitation_prediction_df['Time'] = pd.to_datetime(precipitation_prediction_df['Time'])
-    return precipitation_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_wind_direction_prediction_df():
-    wind_direction_prediction_df = pd.read_csv('predictions/wind_direction_prediction.csv')
-    wind_direction_prediction_df['Time'] = pd.to_datetime(wind_direction_prediction_df['Time'])
-    return wind_direction_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_wind_speed_prediction_df():
-    wind_speed_prediction_df = pd.read_csv('predictions/wind_speed_predictions.csv')
-    wind_speed_prediction_df['Time'] = pd.to_datetime(wind_speed_prediction_df['Time'])
-    return wind_speed_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_cloud_altitude_prediction_df():
-    cloud_altitude_prediction_df = pd.read_csv('predictions/cloud_altitude_predictions.csv')
-    cloud_altitude_prediction_df['Time'] = pd.to_datetime(cloud_altitude_prediction_df['Time'])
-    return cloud_altitude_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_cloud_nebulosity_prediction_df():
-    cloud_nebulosity_prediction_df = pd.read_csv('predictions/cloud_nebulosity_predictions.csv')
-    cloud_nebulosity_prediction_df['Time'] = pd.to_datetime(cloud_nebulosity_prediction_df['Time'])
-    return cloud_nebulosity_prediction_df[['Time', 'Train Prediction']]
-
-
-def get_air_pressure_prediction_df():
-    air_pressure_df = pd.read_csv('predictions/air_pressure_predictions.csv')
-    air_pressure_df['Time'] = pd.to_datetime(air_pressure_df['Time'])
-    return air_pressure_df[['Time', 'Train Prediction']]
-
-
-def get_dew_point_prediction_df():
-    dew_point_df = pd.read_csv('predictions/dew_point_predictions.csv')
-    dew_point_df['Time'] = pd.to_datetime(dew_point_df['Time'])
-    return dew_point_df[['Time', 'Train Prediction']]
-
-
-def get_air_temperature_prediction_df():
-    air_temperature_df = pd.read_csv('predictions/air_temperature_predictions.csv')
-    air_temperature_df['Time'] = pd.to_datetime(air_temperature_df['Time'])
-    return air_temperature_df[['Time', 'Train Prediction']]
-
-
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
     padded = np.zeros((len(preds), total_features))
     padded[:, target_index] = preds.flatten()
@@ -159,26 +62,34 @@ def predict_visibility():
                       'air_temperature']
     target_feature = 'predominant_horizontal_visibility'
 
-    X_train, y_train, X_test, y_test, time_test, scaler = preprocess_data(metars_df, input_features, target_feature)
+    X, y, scaler, observation_times = preprocess_data(metars_df, input_features, target_feature)
+
+    split_index = int(len(X) * 0.8)
+    X_train = X[:split_index]
+    X_test = X[split_index:]
+    y_train = y[:split_index]
+    y_test = y[split_index:]
+    time_train = observation_times[:split_index]
+    time_test = observation_times[split_index:]
 
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
     y_train = y_train.astype('float32')
     y_test = y_test.astype('float32')
 
-    visibility_model = build_visibility_model(X_train.shape[1:])
-    visibility_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
+    bilstm_model = build_visibility_model(X_train.shape[1:])
+    bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
 
-    visibility_predictions = visibility_model.predict(X_test)
+    bilstm_predictions = bilstm_model.predict(X_test)
 
     target_index = input_features.index(target_feature)
-    padded_preds = pad_predictions_for_inverse_transform(visibility_predictions, len(input_features), target_index)
+    padded_preds = pad_predictions_for_inverse_transform(bilstm_predictions, len(input_features), target_index)
     padded_y_test = pad_predictions_for_inverse_transform(y_test, len(input_features), target_index)
 
-    visibility_predictions_unscaled = scaler.inverse_transform(padded_preds)[:, target_index].astype(int)
+    bilstm_predictions_unscaled = scaler.inverse_transform(padded_preds)[:, target_index].astype(int)
     y_test_unscaled = np.round(scaler.inverse_transform(padded_y_test)[:, target_index]).astype(int)
 
-    return visibility_predictions_unscaled, y_test_unscaled, time_test
+    return bilstm_predictions_unscaled, y_test_unscaled, time_test
 
 
 visibility_predictions, visibility_test, time_test = predict_visibility()

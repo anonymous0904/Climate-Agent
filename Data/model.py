@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
@@ -67,22 +69,38 @@ def predict_with_bilstm(target_cols):
 
     bilstm_model = build_bilstm_model(X_train.shape[1:], len(target_cols))
 
-    bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
+    history = bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=16)
 
     bilstm_predictions = bilstm_model.predict(X_test)
     return scaler.inverse_transform(bilstm_predictions).astype(int), scaler.inverse_transform(y_test).astype(
-        int), time_test
+        int), time_test, history
 
+# target_columns = ['dew_point']
+# bilstm_predictions, bilstm_test, time_test, history = predict_with_bilstm(
+#     target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
 
-target_columns = ['dew_point']
-bilstm_predictions, bilstm_test, time_test = predict_with_bilstm(
-    target_columns)  # 'air_temperature', 'dew_point', 'air_pressure'
-
-for i, col in enumerate(target_columns):
-    print(f"\nBiLSTM Evaluation for {col}:")
-    print(f"MAE: {mean_absolute_error(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
-    print(f"RMSE: {np.sqrt(mean_squared_error(bilstm_test[:, i], bilstm_predictions[:, i])):.4f}")
-    print(f"R² Score: {r2_score(bilstm_test[:, i], bilstm_predictions[:, i]):.4f}")
+# plt.figure(figsize=(12, 5))
+#
+# # Loss
+# plt.subplot(1, 2, 1)
+# plt.plot(history.history['loss'], label='Train Loss', color='blue')
+# plt.plot(history.history['val_loss'], label='Validation Loss', color='orange')
+# plt.title('Loss over Epochs')
+# plt.xlabel('Epoch')
+# plt.ylabel('Loss (MSE)')
+# plt.legend()
+#
+# # MAE
+# plt.subplot(1, 2, 2)
+# plt.plot(history.history['mae'], label='Train MAE', color='green')
+# plt.plot(history.history['val_mae'], label='Validation MAE', color='red')
+# plt.title('MAE over Epochs')
+# plt.xlabel('Epoch')
+# plt.ylabel('Mean Absolute Error')
+# plt.legend()
+#
+# plt.tight_layout()
+# plt.show()
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,
@@ -90,18 +108,3 @@ for i, col in enumerate(target_columns):
 #           'Actual Value': bilstm_test.flatten()})
 # train_result.sort_values(by=['Time'], ascending=True)
 # train_result.to_csv('predictions/dew_point_predictions.csv', index=False, columns=train_result.columns)
-
-# BiLSTM Evaluation for air_pressure:
-# MAE: 0.3042
-# RMSE: 0.5691
-# R² Score: 0.9863
-
-# BiLSTM Evaluation for air_temperature:
-# MAE: 1.0148
-# RMSE: 1.3881
-# R² Score: 0.9721
-
-# BiLSTM Evaluation for dew_point:
-# MAE: 0.8012
-# RMSE: 1.1313
-# R² Score: 0.9614

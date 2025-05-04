@@ -18,49 +18,21 @@ tf.random.set_seed(seed_value)
 
 
 def preprocess_data(df, input_features, target_feature, sequence_length=24):
+    df = df[input_features]
     scaler = MinMaxScaler()
-
-    df_train = df[input_features]
-    df_train = df_train[:18671]
-    df_train_scaled = scaler.fit_transform(df_train)
-    df_test = df[['wind_speed']][18671:]
-
-    wind_presence_pred = get_wind_presence_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'wind_presence'})
-    wind_direction_pred = get_wind_direction_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'wind_direction'}
-    )
-    air_temperature_pred = get_air_temperature_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_temperature'})
-    dew_point_pred = get_dew_point_prediction_df().set_index('Time').rename(columns={'Train Prediction': 'dew_point'})
-    air_pressure_pred = get_air_pressure_prediction_df().set_index('Time').rename(
-        columns={'Train Prediction': 'air_pressure'})
-
-    df_test = df_test.join(
-        [wind_presence_pred, wind_direction_pred, air_temperature_pred, dew_point_pred, air_pressure_pred])
-
-    df_test['hour'] = df['hour'][18671:]
-    df_test['month'] = df['month'][18671:]
-
-    df_test = df_test[input_features]
-    df_test_scaled = scaler.transform(df_test)
-
+    df_scaled = scaler.fit_transform(df)
     target_index = input_features.index(target_feature)
 
-    X_train, y_train, X_test, y_test = [], [], [], []
-    for i in range(len(df_train_scaled) - sequence_length):
-        X_train.append(df_train_scaled[i:i + sequence_length])
-        y_train.append(df_train_scaled[i + sequence_length, target_index])
+    X, y = [], []
+    for i in range(len(df_scaled) - sequence_length):
+        X.append(df_scaled[i:i + sequence_length, :-1])
+        y.append(df_scaled[i + sequence_length, target_index])
 
-    for i in range(len(df_test_scaled) - sequence_length):
-        X_test.append(df_test_scaled[i:i + sequence_length])
-        y_test.append(df_test_scaled[i + sequence_length, target_index])
-
-    test_time = df_test.index[sequence_length:]
-    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), test_time, scaler
+    observation_times = df.index[sequence_length:]
+    return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM MODEL - R² Score: 0.9099
+# BiLSTM MODEL - R² Score: 0.9048
 def build_wind_speed_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -90,37 +62,6 @@ def build_wind_speed_model(input_shape):
 #
 #     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 #     return model
-
-def get_wind_presence_prediction_df():
-    wind_presence_df = pd.read_csv('predictions/wind_presence_prediction.csv')
-    wind_presence_df['Time'] = pd.to_datetime(wind_presence_df['Time'])
-    return wind_presence_df[['Time', 'Train Prediction']]
-
-
-def get_wind_direction_prediction_df():
-    wind_direction_df = pd.read_csv('predictions/wind_direction_prediction.csv')
-    wind_direction_df['Time'] = pd.to_datetime(wind_direction_df['Time'])
-    return wind_direction_df[['Time', 'Train Prediction']]
-
-
-def get_air_temperature_prediction_df():
-    air_temperature_df = pd.read_csv('predictions/air_temperature_predictions.csv')
-    air_temperature_df['Time'] = pd.to_datetime(air_temperature_df['Time'])
-    return air_temperature_df[['Time', 'Train Prediction']]
-
-
-def get_dew_point_prediction_df():
-    dew_point_df = pd.read_csv('predictions/dew_point_predictions.csv')
-    dew_point_df['Time'] = pd.to_datetime(dew_point_df['Time'])
-    return dew_point_df[['Time', 'Train Prediction']]
-
-
-def get_air_pressure_prediction_df():
-    air_pressure_df = pd.read_csv('predictions/air_pressure_predictions.csv')
-    air_pressure_df['Time'] = pd.to_datetime(air_pressure_df['Time'])
-    return air_pressure_df[['Time', 'Train Prediction']]
-
-
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
     padded = np.zeros((len(preds), total_features))
     padded[:, target_index] = preds.flatten()
@@ -132,14 +73,21 @@ metars_df.index = pd.to_datetime(metars_df['observation_time'], format="%Y-%m-%d
 metars_df['wind_speed'] = metars_df['wind_speed'].rolling(window=3, center=True).mean().bfill().ffill()
 metars_df['hour'] = metars_df.index.hour
 metars_df['month'] = metars_df.index.month
-metars_df['wind_presence'] = (metars_df['wind_speed'] > 0).astype(int)
 metars_df['wind_dir_sin'] = np.sin(np.deg2rad(metars_df['wind_direction']))
 metars_df['wind_dir_cos'] = np.cos(np.deg2rad(metars_df['wind_direction']))
-input_cols = ['wind_speed', 'wind_presence', 'wind_direction', 'air_temperature', 'dew_point',
-              'air_pressure', 'hour',
+input_cols = ['wind_speed', 'wind_dir_sin', 'wind_dir_cos', 'air_temperature', 'dew_point', 'air_pressure', 'hour',
               'month']
 target_col = 'wind_speed'
-X_train, y_train, X_test, y_test, time_test, scaler = preprocess_data(metars_df, input_cols, target_col)
+X, y, scaler, observation_times = preprocess_data(metars_df, input_cols, target_col)
+
+split_index = int(len(X) * 0.8)
+
+X_train = X[:split_index]
+X_test = X[split_index:]
+y_train = y[:split_index]
+y_test = y[split_index:]
+time_train = observation_times[:split_index]
+time_test = observation_times[split_index:]
 
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
@@ -149,8 +97,8 @@ y_test = y_test.astype('float32')
 bilstm_model = build_wind_speed_model(X_train.shape[1:])
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
-history = bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32,
-                           callbacks=[early_stopping])
+bilstm_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=32,
+                 callbacks=[early_stopping])
 
 bilstm_predictions = bilstm_model.predict(X_test)
 
@@ -160,10 +108,6 @@ padded_y_test = pad_predictions_for_inverse_transform(y_test, len(input_cols), t
 
 bilstm_predictions_unscaled = scaler.inverse_transform(padded_preds)[:, target_index].astype(int)
 y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].astype(int)
-
-wind_presence_prediction = get_wind_presence_prediction_df()[14:]['Train Prediction']
-bilstm_predictions_unscaled = np.array(bilstm_predictions_unscaled) * np.array(wind_presence_prediction)
-
 print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}")
 
 # train_result = pd.DataFrame(

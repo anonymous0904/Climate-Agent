@@ -30,21 +30,6 @@ def preprocess_cloud_presence_data(df, input_features, target_feature, sequence_
     return np.array(X), np.array(y), observation_times
 
 
-# BINARY CLASSIFICATION MODELS FOR THE PRESENCE OF CLOUDS
-
-# BiLSTM - MODEL  - Accuracy: 0.8972
-# def build_cloud_presence_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))  # Input shape will be (sequence_length, num_features)
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(32)))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1, activation='sigmoid'))
-#
-#     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-#     return model
-
 # HYBRID 1D-CNN + BiLSTM - MODEL - Accuracy: 0.8972
 def build_cloud_presence_model(input_shape):
     model = Sequential()
