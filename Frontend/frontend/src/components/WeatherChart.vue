@@ -76,6 +76,10 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       }
     }
   },
+  animation: {
+    duration: 800,
+    easing: 'easeInOutQuart'
+  },
   scales: {
     x: {
       ticks: {
@@ -195,7 +199,8 @@ watch(() => props.variable, async (newVar) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1e1e1e;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
 }
 
 .reset-btn {

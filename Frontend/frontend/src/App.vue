@@ -63,7 +63,18 @@ const variables: Record<string, string> = {
   radial-gradient(at 80% 75%, rgba(178, 102, 255, 0.25) 0%, transparent 60%),
   linear-gradient(135deg, #0d0d17 0%, #1e1e2a 40%, #121212 100%);
   background-blend-mode: overlay;
-  animation: gradientShift 20s ease-in-out infinite alternate;
+  animation: gradientShift 20s ease-in-out infinite alternate,
+  pulseDots 6s ease-in-out infinite alternate;
+}
+
+
+@keyframes pulseDots {
+  0% {
+    background-position: 25% 20%, 80% 75%;
+  }
+  100% {
+    background-position: 30% 25%, 75% 70%;
+  }
 }
 
 @keyframes gradientShift {

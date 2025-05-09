@@ -25,8 +25,6 @@ def get_data(variable):
         return jsonify({"error": "Invalid variable"}), 404
     df = pd.read_csv(f'Data/predictions/{VAR_FILES[variable]}')
     df['Time'] = pd.to_datetime(df['Time'])
-    # df['Train Prediction'] = pd.to_numeric(df['Train Prediction'], errors='coerce')
-    # df['Actual Value'] = pd.to_numeric(df['Actual Value'], errors='coerce')
     df = df[['Time', 'Actual Value', 'Train Prediction']]
     return df.to_dict(orient='records')
 

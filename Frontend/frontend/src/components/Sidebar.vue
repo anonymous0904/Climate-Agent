@@ -47,9 +47,15 @@ button {
   margin: 0.2rem 0;
   padding: 0.5rem;
   cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 button:hover {
-  background-color: #333;
+  transform: translateX(4px);
+}
+
+button:focus {
+  outline: 2px solid #03dac6;
+  transform: translateX(2px);
 }
 </style>
