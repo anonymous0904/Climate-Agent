@@ -31,7 +31,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# CNN + BiLSTM: R² Score: 0.8865
 def build_visibility_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))

@@ -2,13 +2,11 @@ import random
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
 from keras.src.layers import Input, Dense, Dropout, LSTM, Bidirectional
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import tensorflow as tf
 
 seed_value = 42

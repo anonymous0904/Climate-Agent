@@ -8,7 +8,7 @@ from keras.src.callbacks import EarlyStopping
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
 from keras.src.models import Sequential
-from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D, Flatten
+from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D
 from sklearn.metrics import accuracy_score
 import tensorflow as tf
 
@@ -30,7 +30,6 @@ def preprocess_cloud_presence_data(df, input_features, target_feature, sequence_
     return np.array(X), np.array(y), observation_times
 
 
-# HYBRID 1D-CNN + BiLSTM - MODEL - Accuracy: 0.8972
 def build_cloud_presence_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))

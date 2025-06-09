@@ -1,5 +1,3 @@
-# METHODS TO SAVE AND READ THE METAR DATA FRAME FROM THE CSV FILE
-
 from validate_data import get_validated_metar_data_frame
 import pandas as pd
 

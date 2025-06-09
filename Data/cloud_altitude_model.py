@@ -5,7 +5,6 @@ import pandas as pd
 from keras import Sequential, Input
 from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D
 import tensorflow as tf
-from sklearn.metrics import r2_score
 from sklearn.preprocessing import MinMaxScaler
 
 from Data import csv_file_handler
@@ -30,7 +29,6 @@ def preprocess_data(df, input_cols, target_cols, sequence_length=10):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# R² Score: 0.9256
 def cloud_altitude_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -113,11 +111,7 @@ y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].flatt
 altitude_preds = np.zeros(n_test)
 altitude_preds[get_cloud_presence_prediction_df()['Train Prediction'] == 1] = cloud_altitude_predictions_with_clouds
 altitude_preds[get_cloud_presence_prediction_df()['Train Prediction'] == 0] = 0
-altitude_preds = pd.Series(altitude_preds).shift(-1)
-altitude_preds.iloc[-1] = 0
 altitude_preds = altitude_preds.astype(int)
-
-print(f"R² Score: {r2_score(y_test_unscaled, altitude_preds):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,

@@ -9,7 +9,6 @@ from sklearn.preprocessing import MinMaxScaler
 import csv_file_handler
 from keras.src.models import Sequential
 from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D
-from sklearn.metrics import accuracy_score
 import tensorflow as tf
 
 seed_value = 42
@@ -74,7 +73,6 @@ def predict_wind_presence():
 wind_presence_prediction, y_test, time_test, history = predict_wind_presence()
 wind_presence_prediction_binary = (wind_presence_prediction > 0.5).astype(int)
 wind_presence_test = y_test.astype(int)
-print(f"Accuracy: {accuracy_score(wind_presence_test, wind_presence_prediction_binary):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,

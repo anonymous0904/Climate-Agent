@@ -3,7 +3,6 @@ import random
 import numpy as np
 import pandas as pd
 from keras.src.callbacks import EarlyStopping
-from matplotlib import pyplot as plt
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
@@ -53,7 +52,6 @@ def preprocess_data(df, input_features, sequence_length=24):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# CNN + BiLSTM - Mean Angular Error: 9.75°
 def build_wind_direction_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))

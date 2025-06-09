@@ -5,7 +5,6 @@ import pandas as pd
 from keras import Sequential, Input
 from keras.src.callbacks import EarlyStopping
 from keras.src.layers import LSTM, Bidirectional, Dropout, Dense, Conv1D, MaxPooling1D
-from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler
 
 from Data import csv_file_handler
@@ -31,7 +30,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     return np.array(X), np.array(y).astype(int), scaler, observation_times
 
 
-# CNN + BiLSTM - Accuracy: 0.9576
 def build_cloud_nebulosity_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -75,11 +73,8 @@ cloud_nebulosity_model.fit(X_train, y_train, validation_data=(X_test, y_test), e
 cloud_nebulosity_predictions = cloud_nebulosity_model.predict(X_test)
 cloud_nebulosity_predictions = np.argmax(cloud_nebulosity_predictions, axis=1)
 cloud_nebulosity_predictions = pd.Series(cloud_nebulosity_predictions)
-cloud_nebulosity_predictions = pd.Series(cloud_nebulosity_predictions).shift(-1)
-cloud_nebulosity_predictions.iloc[-1] = 0
 cloud_nebulosity_predictions = cloud_nebulosity_predictions.astype(int)
 y_test = y_test.astype(int)
-print(f"Accuracy: {accuracy_score(cloud_nebulosity_predictions, y_test):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,

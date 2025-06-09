@@ -4,13 +4,11 @@ import numpy as np
 import pandas as pd
 from keras import Input
 from keras.src.callbacks import EarlyStopping
-from matplotlib import pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 import csv_file_handler
 from keras.src.models import Sequential
-from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D, Flatten
-from sklearn.metrics import accuracy_score
+from keras.src.layers import Dense, Bidirectional, LSTM, Dropout, Conv1D, MaxPooling1D
 import tensorflow as tf
 
 seed_value = 42
@@ -31,7 +29,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=10):
     return np.array(X), np.array(y), observation_times
 
 
-# HYBRID 1D-CNN + BiLSTM - MODEL - ACCURACY: 0.9786
 def build_fog_presence_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -77,7 +74,6 @@ def predict_fog_presence():
 fog_presence_prediction, fog_presence_test, time_test = predict_fog_presence()
 fog_presence_prediction_binary = (fog_presence_prediction > 0.5).astype(int)
 fog_presence_test = fog_presence_test.astype(int)
-print(f"Accuracy: {accuracy_score(fog_presence_test, fog_presence_prediction_binary):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,

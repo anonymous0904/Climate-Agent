@@ -6,9 +6,8 @@ from keras.src.callbacks import EarlyStopping
 
 import csv_file_handler
 from sklearn.preprocessing import MinMaxScaler
-from keras.src.models import Sequential, Model
-from keras.src.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, Bidirectional, Reshape
-from sklearn.metrics import r2_score
+from keras.src.models import Sequential
+from keras.src.layers import Input, Dense, Dropout, LSTM, Bidirectional
 import tensorflow as tf
 
 seed_value = 42
@@ -32,7 +31,6 @@ def preprocess_data(df, input_features, target_feature, sequence_length=24):
     return np.array(X), np.array(y), scaler, observation_times
 
 
-# BiLSTM MODEL - R² Score: 0.9048
 def build_wind_speed_model(input_shape):
     model = Sequential()
     model.add(Input(shape=input_shape))
@@ -47,21 +45,6 @@ def build_wind_speed_model(input_shape):
     return model
 
 
-# 1D-CNN + BiLSTM MODEL - R² Score: 0.8672
-# def build_wind_speed_model(input_shape):
-#     model = Sequential()
-#     model.add(Input(shape=input_shape))
-#     model.add(Conv1D(filters=64, kernel_size=3, activation='relu', padding='same'))
-#     model.add(MaxPooling1D(pool_size=2))
-#     model.add(Bidirectional(LSTM(64, return_sequences=True)))
-#     model.add(Dropout(0.2))
-#     model.add(Bidirectional(LSTM(64)))
-#     model.add(Dense(128, activation='relu'))
-#     model.add(Dense(64, activation='relu'))
-#     model.add(Dense(1))
-#
-#     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-#     return model
 def pad_predictions_for_inverse_transform(preds, total_features, target_index):
     padded = np.zeros((len(preds), total_features))
     padded[:, target_index] = preds.flatten()
@@ -108,7 +91,6 @@ padded_y_test = pad_predictions_for_inverse_transform(y_test, len(input_cols), t
 
 bilstm_predictions_unscaled = scaler.inverse_transform(padded_preds)[:, target_index].astype(int)
 y_test_unscaled = scaler.inverse_transform(padded_y_test)[:, target_index].astype(int)
-print(f"R² Score: {r2_score(bilstm_predictions_unscaled, y_test_unscaled):.4f}")
 
 # train_result = pd.DataFrame(
 #     data={'Time': time_test,
